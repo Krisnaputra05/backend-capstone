@@ -9,6 +9,7 @@ const {
   setGroupRules,
   validateGroupRegistration,
 } = require("../controllers/adminController");
+const { listDeliverables } = require("../controllers/adminDeliverableController");
 
 // --- Rute Grup ---
 
@@ -62,6 +63,14 @@ router.post(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   validateGroupRegistration
+);
+
+// List Deliverables (Filtered)
+router.get(
+  "/deliverables",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  listDeliverables
 );
 
 module.exports = router;

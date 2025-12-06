@@ -1,6 +1,52 @@
 # 📚 API Contract: Admin & User Features
 
+
+####  NOTE : UNTUK FRONT-END  JADI UNTUK SEMUA KEY BISA DI COMBAIN 2 KEY SEPERTI USER ID SAMA ID UIDD
+
 Berikut adalah dokumentasi kontrak API untuk fitur Admin (Group Management) dan User (View & Docs), melengkapi kontrak Auth yang sudah ada.
+
+---
+
+## 🔐 0. Auth Features
+
+**Base URL:** `/api/auth`
+
+### a. Register User
+
+Mendaftarkan pengguna baru.
+**Catatan:** Jika pengguna mendaftar sebelum **30 Januari 2026**, `batch_id` akan otomatis diset ke **'asah-batch-1'**.
+
+- **Endpoint:** `POST /register`
+- **Headers:** `Content-Type: application/json`
+
+**Request Body:**
+
+```json
+{
+  "email": "String", // Wajib
+  "password": "String", // Wajib
+  "name": "String", // Wajib
+  "role": "String" // Opsional (default: student)
+}
+```
+
+**Success Response (Status 201 Created):**
+
+```json
+{
+  "message": "Registrasi berhasil.",
+  "user": {
+    "id": "UUID",
+    "email": "String",
+    "name": "String",
+    "role": "String",
+    "batch_id": "String" // e.g., "asah-batch-1"
+  },
+  "meta": {
+    "timestamp": "ISO8601"
+  }
+}
+```
 
 ---
 
@@ -318,7 +364,45 @@ Mengupload dokumen tugas ke grup.
 
 ---
 
-### b. Get Group Rules
+### b. Submit Deliverable
+
+Mengumpulkan dokumen deliverable (Project Plan, Final Report, Video).
+
+- **Endpoint:** `POST /deliverables`
+- **Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "document_type": "String", // Wajib. Enum: "PROJECT_PLAN", "FINAL_REPORT", "PRESENTATION_VIDEO"
+  "file_path": "String", // Wajib. URL file
+  "description": "String" // Opsional
+}
+```
+
+**Success Response (Status 201 Created):**
+
+```json
+{
+  "message": "Dokumen berhasil dikumpulkan.",
+  "data": {
+    "id": "UUID",
+    "group_ref": "UUID",
+    "document_type": "String",
+    "file_path": "String",
+    "status": "SUBMITTED",
+    "submitted_at": "ISO8601"
+  },
+  "meta": {
+    "timestamp": "ISO8601"
+  }
+}
+```
+
+---
+
+### c. Get Group Rules
 
 Melihat aturan komposisi tim yang aktif.
 
@@ -348,9 +432,52 @@ Melihat aturan komposisi tim yang aktif.
 
 ---
 
-### c. Register Team
+---
+
+### c. Get My Team
+
+Melihat detail tim pengguna saat ini (termasuk status dan anggota).
+
+- **Endpoint:** `GET /my-team`
+- **Headers:** `Authorization: Bearer <token>`
+
+**Success Response (Status 200 OK):**
+
+```json
+{
+  "message": "Berhasil mengambil data tim.",
+  "data": {
+    "id": "UUID",
+    "group_name": "String",
+    "status": "String",
+    "batch_id": "String",
+    "members": [
+      {
+        "id": "UUID",
+        "name": "String",
+        "email": "String",
+        "role": "leader", // atau "member"
+        "learning_path": "String",
+        "university": "String"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "ISO8601"
+  }
+}
+```
+
+---
 
 Mendaftarkan tim baru dengan validasi komposisi dan keanggotaan.
+**Aturan:** 
+1. Komposisi tim divalidasi berdasarkan aturan **Use Case** yang dipilih.
+2. Ketua kelompok harus ada di dalam daftar anggota.
+1. Komposisi tim divalidasi berdasarkan aturan **Use Case** yang dipilih.
+2. Ketua kelompok harus ada di dalam daftar anggota.
+3. **Profil Ketua** (Learning Path & Universitas) harus sudah dilengkapi sebelum mendaftar.
+4. **Email Notifikasi:** Setelah pendaftaran berhasil, email konfirmasi ("Pendaftaran Diterima") akan dikirimkan secara otomatis ke seluruh anggota tim.
 
 - **Endpoint:** `POST /register`
 - **Headers:** `Authorization: Bearer <token>`
@@ -360,7 +487,8 @@ Mendaftarkan tim baru dengan validasi komposisi dan keanggotaan.
 ```json
 {
   "group_name": "String", // Wajib
-  "member_ids": ["UUID", "UUID"] // Array ID anggota (termasuk ketua)
+  "use_case_id": "UUID", // Wajib
+  "member_source_ids": ["String", "String"] // Array ID anggota (e.g., ["FUI0001", "FUI0002"])
 }
 ```
 
@@ -457,6 +585,7 @@ Mengatur aturan komposisi tim.
 ### b. Validate Group Registration
 
 Memvalidasi pendaftaran tim (Terima/Tolak).
+**Catatan:** Sistem akan mengirimkan **email notifikasi** ke seluruh anggota tim berisi status validasi (Diterima/Ditolak) beserta alasannya (jika ditolak).
 
 - **Endpoint:** `POST /groups/:groupId/validate`
 - **Headers:** `Authorization: Bearer <token>`
