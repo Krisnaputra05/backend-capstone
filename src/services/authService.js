@@ -12,7 +12,7 @@ async function loginUser(email, password) {
   // 1. Ambil User
   const { data: user, error } = await supabase
     .from("users")
-    .select("id, email, password, name, role")
+    .select("id, email, password, name, role, users_source_id")
     .eq("email", email)
     .limit(1)
     .single();
@@ -47,7 +47,9 @@ async function loginUser(email, password) {
       id: user.id,
       email: user.email,
       name: user.name,
+      name: user.name,
       role: user.role,
+      users_source_id: user.users_source_id,
     },
   };
 }
@@ -104,7 +106,7 @@ async function registerUser({ email, password, name, role }) {
     email,
     password: hash,
     name,
-    role,
+    role: role ? role.toUpperCase() : "STUDENT",
     users_source_id: usersSourceId,
     created_at: new Date().toISOString(),
   };

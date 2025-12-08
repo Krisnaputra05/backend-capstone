@@ -142,7 +142,7 @@ async function getGroupRulesService(userId) {
 /**
  * Register team
  */
-async function registerTeamService(creatorId, { group_name, member_source_ids, use_case_id }) {
+async function registerTeamService(creatorId, { group_name, member_source_ids, use_case_source_id }) {
   // 0. Validasi Profil Creator & Ambil Source ID
   const { data: creator, error: creatorErr } = await supabase
     .from("users")
@@ -169,10 +169,22 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
     throw { code: "INVALID_MEMBER_ID", message: "Ketua kelompok harus termasuk dalam daftar anggota." };
   }
 
-  // Validasi Use Case ID
-  if (!use_case_id) {
-    throw { code: "VALIDATION_FAILED", message: "Use Case ID wajib diisi." };
+  // Validasi Use Case Source ID & Resolve to UUID
+  if (!use_case_source_id) {
+    throw { code: "VALIDATION_FAILED", message: "Use Case Code (Source ID) wajib diisi." };
   }
+
+  const { data: useCase, error: ubErr } = await supabase
+    .from("capstone_use_case")
+    .select("id")
+    .eq("capstone_use_case_source_id", use_case_source_id)
+    .single();
+
+  if (ubErr || !useCase) {
+    throw { code: "USE_CASE_NOT_FOUND", message: "Use Case tidak ditemukan." };
+  }
+
+  const use_case_id = useCase.id;
 
   // Resolve Source IDs to UUIDs
   const { data: members, error: membersErr } = await supabase

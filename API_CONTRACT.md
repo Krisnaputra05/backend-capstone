@@ -487,7 +487,7 @@ Mendaftarkan tim baru dengan validasi komposisi dan keanggotaan.
 ```json
 {
   "group_name": "String", // Wajib
-  "use_case_id": "UUID", // Wajib
+  "use_case_source_id": "String", // Wajib (e.g., "UC-001")
   "member_source_ids": ["String", "String"] // Array ID anggota (e.g., ["FUI0001", "FUI0002"])
 }
 ```

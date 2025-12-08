@@ -172,18 +172,18 @@ async function getGroupRules(req, res) {
  * POST /api/group/register
  */
 async function registerTeam(req, res) {
-  const { group_name, member_source_ids, use_case_id } = req.body;
+  const { group_name, member_source_ids, use_case_source_id } = req.body;
 
   if (
     !group_name ||
     !Array.isArray(member_source_ids) ||
     member_source_ids.length === 0 ||
-    !use_case_id
+    !use_case_source_id
   ) {
     return buildErrorResponse(
       res,
       400,
-      "Nama grup, daftar ID anggota (Source ID), dan Use Case ID wajib diisi.",
+      "Nama grup, daftar ID anggota (Source ID), dan Use Case ID (Source ID) wajib diisi.",
       "VALIDATION_FAILED"
     );
   }
@@ -192,7 +192,7 @@ async function registerTeam(req, res) {
     const group = await registerTeamService(req.user.userId, {
       group_name,
       member_source_ids,
-      use_case_id,
+      use_case_source_id,
     });
 
     // Fetch emails for notification
