@@ -8,3 +8,5 @@ coverage/
 .idea/
 *.swp
 SCHEMA_UPDATE.sql
+API_CONTRACT.md
+EMAIL_GUIDE.md
