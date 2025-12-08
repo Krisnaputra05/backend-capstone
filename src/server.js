@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Halo Dunia! Ini Express.js pertamaku!");
+  res.send("Welcome to Capstone Project Management API");
 });
 
 app.use("/api/auth", authRouter);
