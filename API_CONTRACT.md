@@ -1,613 +1,507 @@
-# 📚 API Contract: Admin & User Features
+# 📚 API Contract: Capstone Project Backend
 
-
-####  NOTE : UNTUK FRONT-END  JADI UNTUK SEMUA KEY BISA DI COMBAIN 2 KEY SEPERTI USER ID SAMA ID UIDD
-
-Berikut adalah dokumentasi kontrak API untuk fitur Admin (Group Management) dan User (View & Docs), melengkapi kontrak Auth yang sudah ada.
+Dokumentasi lengkap untuk endpoint yang tersedia di backend Capstone Project Management.
 
 ---
 
-## 🔐 0. Auth Features
+## � Server Base URL (Domains)
+
+| Environment | Base URL | Keterangan |
+| :--- | :--- | :--- |
+| **Development** | `http://localhost:3000` | Server lokal saat development. |
+| **Production** | `https://backendsw.vercel.app` | URL server saat deploy. |
+
+---
+
+## 📚 Reference: Valid Domains (Learning Paths)
+Berikut adalah daftar **Learning Path (Domain)** yang valid untuk mahasiswa dan aturan komposisi tim:
+1.  **Machine Learning (ML)**
+2.  **Cloud Computing (CC)**
+3.  **Mobile Development (MD)**
+
+---
+
+## �🌟 Overview Fitur
+Project ini memiliki **7 Modul Utama** yang terbagi untuk role **Admin** dan **Student**:
+
+1.  **Authentication (Auth)**: Registrasi dan Login pengguna (dengan JWT).
+2.  **User Profile & Dashboard**: Profil pengguna, timeline proyek, dan daftar dokumen referensi.
+3.  **Group Management (Admin)**: Pembuatan, update status, dan monitoring grup/tim.
+4.  **Team Registration (Student)**: Pembentukan tim oleh mahasiswa dengan validasi aturan Use Case.
+5.  **Deliverables**: Pengumpulan tugas (Project Plan, Final Report, Video) dan pemantauan oleh Admin.
+6.  **Capstone Worksheet (Check-in)**: Laporan aktivitas individu mingguan.
+7.  **360-Degree Feedback**: Penilaian antar anggota tim (Peer Review).
+
+---
+
+## 🔑 Role Access Matrix
+
+| Fitur / Modul | Endpoint (Method) | Admin | Student | Deskripsi |
+| :--- | :--- | :---: | :---: | :--- |
+| **Auth** | POST /register, POST /login | ✅ | ✅ | Semua user bisa register/login. |
+| **User Profile** | GET /profile, /timeline, /docs, /users/use-cases | ✅ | ✅ | Akses data dasar pengguna. |
+| **Manage Groups** | POST/PUT /groups, PUT /project/status | ✅ | ❌ | Admin mengatur grup & status proyek. |
+| **Rules Configuration** | POST /rules | ✅ | ❌ | Admin mengatur aturan komposisi tim. |
+| **Team Registration** | POST /register, GET /my-team | ❌ | ✅ | Mahasiswa mendaftarkan tim mereka. |
+| **Deliverables** | POST /deliverables (Submit) | ❌ | ✅ | Mahasiswa mengumpulkan tugas. |
+| **Deliverables List** | GET /deliverables (List All) | ✅ | ❌ | Admin memantau pengumpulan tugas. |
+| **Worksheet** | POST /worksheets (Submit) | ❌ | ✅ | Mahasiswa check-in mingguan. |
+| **Worksheet Valid.** | PUT /worksheets/:id/validate | ✅ | ❌ | Admin memvalidasi laporan check-in. |
+| **Feedback** | POST /feedback (Submit) | ❌ | ✅ | Peer review antar mahasiswa. |
+| **Feedback Export** | GET /feedback/export | ✅ | ❌ | Admin download data feedback. |
+
+---
+
+## 1. 🔐 Authentication Features
 
 **Base URL:** `/api/auth`
 
 ### a. Register User
-
 Mendaftarkan pengguna baru.
-**Catatan:** Jika pengguna mendaftar sebelum **30 Januari 2026**, `batch_id` akan otomatis diset ke **'asah-batch-1'**.
 
-- **Endpoint:** `POST /register`
-- **Headers:** `Content-Type: application/json`
-
-**Request Body:**
-
-```json
-{
-  "email": "String", // Wajib
-  "password": "String", // Wajib
-  "name": "String", // Wajib
-  "role": "String" // Opsional (default: student)
-}
-```
-
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Registrasi berhasil.",
-  "user": {
-    "id": "UUID",
-    "email": "String",
-    "name": "String",
-    "role": "String",
-    "batch_id": "String" // e.g., "asah-batch-1"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-## 🛡️ 1. Admin: Group Management
-
-**Base URL:** `/api/admin`
-**Authorization:** Bearer Token (Role: `admin`)
-
-### a. Create Group
-
-Membuat grup baru dan menetapkan admin pembuat sebagai leader.
-
-- **Endpoint:** `POST /groups`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-
-```json
-{
-  "group_name": "String", // Wajib. Contoh: "Capstone A"
-  "batch_id": "String" // Wajib. Contoh: "BATCH-001"
-}
-```
-
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Grup berhasil dibuat dan leader telah ditetapkan.",
-  "group": {
-    "id": "UUID",
-    "group_name": "String",
-    "batch_id": "String",
-    "creator_user_ref": "UUID",
-    "status": "draft",
-    "created_at": "ISO8601"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
-**Error Response (Status 400, 500):**
-
-```json
-{
-  "message": "Permintaan tidak valid. Beberapa field wajib diisi.",
-  "error": {
-    "code": "VALIDATION_FAILED",
-    "fields": {
-      "group_name": "Nama grup wajib diisi."
-    }
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-### b. Update Group
-
-Memperbarui informasi dasar grup.
-
-- **Endpoint:** `PUT /groups/:groupId`
-- **Headers:** `Authorization: Bearer <token>`
-- **Params:** `groupId` (UUID)
-
-**Request Body:**
-
-```json
-{
-  "group_name": "String", // Opsional
-  "batch_id": "String", // Opsional
-  "status": "String" // Opsional. Contoh: "active", "inactive", "draft"
-}
-```
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Grup ID <groupId> berhasil diperbarui.",
-  "group": {
-    "id": "UUID",
-    "group_name": "String",
-    "batch_id": "String",
-    "updated_at": "ISO8601"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-### c. Update Project Status
-
-Mengubah status proyek grup menjadi `in_progress`.
-
-- **Endpoint:** `PUT /project/:groupId`
-- **Headers:** `Authorization: Bearer <token>`
-- **Params:** `groupId` (UUID)
-
-**Request Body:** _(Kosong)_
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Status proyek untuk Grup ID <groupId> berhasil diubah menjadi 'in_progress'.",
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-### d. List All Groups
-
-Mengambil daftar semua grup beserta nama pembuatnya.
-
-- **Endpoint:** `GET /groups`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil semua grup.",
-  "data": [
+-   **Endpoint:** `POST /register`
+-   **Body:**
+    ```json
     {
-      "id": "UUID",
-      "group_name": "String",
-      "batch_id": "String",
-      "status": "String",
-      "creator_name": "String", // Nama pembuat grup
-      "created_at": "ISO8601"
+      "email": "student@indo.com",
+      "password": "password123",
+      "name": "Budi Santoso",
+      "role": "student"
     }
-  ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Registrasi berhasil.",
+      "user": {
+        "id": "uuid-user-1",
+        "email": "student@indo.com",
+        "name": "Budi Santoso",
+        "role": "student",
+        "batch_id": "asah-batch-1"
+      },
+      "meta": { "timestamp": "2023-10-01T10:00:00Z" }
+    }
+    ```
+
+### b. Login User
+Masuk ke sistem.
+
+-   **Endpoint:** `POST /login`
+-   **Body:**
+    ```json
+    {
+      "email": "student@indo.com",
+      "password": "password123"
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "token": "eyJhbGciOiJIUzI1Ti...",
+      "user": {
+        "id": "uuid-user-1",
+        "email": "student@indo.com",
+        "role": "student",
+        "users_source_id": "FUI0001"
+      },
+      "meta": { "timestamp": "2023-10-01T10:00:00Z" }
+    }
+    ```
 
 ---
 
-## 👤 2. User Features
+## 2. 👤 User & Dashboard Features
 
-**Base URL:** `/api/user`
-**Authorization:** Bearer Token (Role: `student` / `admin`)
+**Base URL:** `/api/user` (Auth: Bearer Token)
 
 ### a. Get Profile
-
-Mengambil data profil pengguna yang sedang login.
-
-- **Endpoint:** `GET /profile`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil profil pengguna.",
-  "data": {
-    "name": "String",
-    "email": "String",
-    "role": "String",
-    "university": "String",
-    "learning_group": "String"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
+-   **Endpoint:** `GET /profile`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil profil pengguna.",
+      "data": {
+        "name": "Budi Santoso",
+        "email": "student@indo.com",
+        "role": "student",
+        "university": "Universitas Indonesia",
+        "learning_group": "M01"
+      },
+      "meta": { "timestamp": "..." }
+    }
+    ```
 
 ### b. List Available Docs
-
-Mengambil daftar dokumen referensi capstone.
-
-- **Endpoint:** `GET /docs`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil daftar dokumen.",
-  "data": [
+-   **Endpoint:** `GET /docs`
+-   **Response (200 OK):**
+    ```json
     {
-      "id": "UUID",
-      "title": "String",
-      "url": "String",
-      "order_idx": "Number"
+      "message": "Berhasil mengambil daftar dokumen.",
+      "data": [
+        { "id": "uuid-doc-1", "title": "Guidebook", "url": "http://...", "order_idx": 1 }
+      ]
     }
-  ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
+    ```
 
 ### c. List Project Timeline
-
-Mengambil timeline proyek (difilter berdasarkan batch user jika ada).
-
-- **Endpoint:** `GET /timeline`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil timeline proyek.",
-  "data": [
+-   **Endpoint:** `GET /timeline`
+-   **Response (200 OK):**
+    ```json
     {
-      "id": "UUID",
-      "title": "String",
-      "description": "String",
-      "start_at": "ISO8601",
-      "end_at": "ISO8601"
+      "message": "Berhasil mengambil timeline proyek.",
+      "data": [
+        { "title": "Pendaftaran", "start_at": "...", "end_at": "..." }
+      ]
     }
-  ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
+    ```
 
 ### d. List Use Cases
-
-Mengambil daftar use case yang tersedia.
-
-- **Endpoint:** `GET /use-cases`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil daftar use cases.",
-  "data": [
+-   **Endpoint:** `GET /use-cases`
+-   **Response (200 OK):**
+    ```json
     {
-      "id": "UUID",
-      "name": "String",
-      "company": "String"
+      "message": "Berhasil mengambil daftar use cases.",
+      "data": [
+        { "id": "uuid-uc-1", "name": "Company Profile AI", "company": "Dicoding" },
+        { "id": "uuid-uc-2", "name": "E-Commerce", "company": "Tokopedia" }
+      ]
     }
-  ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+    ```
 
 ---
 
-## 📂 3. Group Features (User)
+## 3. 👥 Group & Team Features (Student Scope)
 
-**Base URL:** `/api/group`
-**Authorization:** Bearer Token (Role: `student`)
+**Base URL:** `/api/group` (Auth: Student)
 
-### a. Upload Document
-
-Mengupload dokumen tugas ke grup.
-
-- **Endpoint:** `POST /docs`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-
-```json
-{
-  "group_id": "UUID", // Wajib
-  "url": "String" // Wajib (URL file yang sudah diupload ke storage)
-}
-```
-
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Dokumen berhasil dibuat.",
-  "doc_id": "UUID",
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
-**Error Response (Status 400):**
-
-```json
-{
-  "message": "group_id dan url wajib diisi.",
-  "error": {
-    "code": "VALIDATION_FAILED"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-### b. Submit Deliverable
-
-Mengumpulkan dokumen deliverable (Project Plan, Final Report, Video).
-
-- **Endpoint:** `POST /deliverables`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-
-```json
-{
-  "document_type": "String", // Wajib. Enum: "PROJECT_PLAN", "FINAL_REPORT", "PRESENTATION_VIDEO"
-  "file_path": "String", // Wajib. URL file
-  "description": "String" // Opsional
-}
-```
-
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Dokumen berhasil dikumpulkan.",
-  "data": {
-    "id": "UUID",
-    "group_ref": "UUID",
-    "document_type": "String",
-    "file_path": "String",
-    "status": "SUBMITTED",
-    "submitted_at": "ISO8601"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-### c. Get Group Rules
-
-Melihat aturan komposisi tim yang aktif.
-
-- **Endpoint:** `GET /rules`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil aturan grup.",
-  "data": [
+### a. Register Team
+-   **Endpoint:** `POST /register`
+-   **Body:**
+    ```json
     {
-      "id": "UUID",
-      "user_attribute": "learning_path",
-      "attribute_value": "Machine Learning",
-      "operator": ">=",
-      "value": "2",
-      "is_active": true
+      "group_name": "Capstone Team A",
+      "use_case_source_id": "UC-001",
+      "member_source_ids": ["FUI0001", "FUI0002"]
     }
-  ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Pendaftaran tim berhasil dikirim dan menunggu validasi.",
+      "data": { "group_id": "uuid-group-1", "status": "pending_validation" },
+      "meta": { "timestamp": "..." }
+    }
+    ```
+-   **Error (400 - Invalid Composition):**
+    ```json
+    {
+      "message": "Komposisi tim tidak memenuhi syarat: Machine Learning harus >= 2.",
+      "error": { "code": "INVALID_COMPOSITION" }
+    }
+    ```
 
----
-
----
-
-### c. Get My Team
-
-Melihat detail tim pengguna saat ini (termasuk status dan anggota).
-
-- **Endpoint:** `GET /my-team`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Success Response (Status 200 OK):**
-
-```json
-{
-  "message": "Berhasil mengambil data tim.",
-  "data": {
-    "id": "UUID",
-    "group_name": "String",
-    "status": "String",
-    "batch_id": "String",
-    "members": [
-      {
-        "id": "UUID",
-        "name": "String",
-        "email": "String",
-        "role": "leader", // atau "member"
-        "learning_path": "String",
-        "university": "String"
+### b. Get My Team
+-   **Endpoint:** `GET /my-team`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil data tim.",
+      "data": {
+        "id": "uuid-group-1",
+        "group_name": "Capstone Team A",
+        "status": "pending_validation",
+        "members": [
+          { "name": "Budi", "role": "leader", "learning_path": "Cloud Computing" },
+          { "name": "Siti", "role": "member", "learning_path": "Machine Learning" }
+        ]
       }
-    ]
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
----
-
-Mendaftarkan tim baru dengan validasi komposisi dan keanggotaan.
-**Aturan:** 
-1. Komposisi tim divalidasi berdasarkan aturan **Use Case** yang dipilih.
-2. Ketua kelompok harus ada di dalam daftar anggota.
-1. Komposisi tim divalidasi berdasarkan aturan **Use Case** yang dipilih.
-2. Ketua kelompok harus ada di dalam daftar anggota.
-3. **Profil Ketua** (Learning Path & Universitas) harus sudah dilengkapi sebelum mendaftar.
-4. **Email Notifikasi:** Setelah pendaftaran berhasil, email konfirmasi ("Pendaftaran Diterima") akan dikirimkan secara otomatis ke seluruh anggota tim.
-
-- **Endpoint:** `POST /register`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-
-```json
-{
-  "group_name": "String", // Wajib
-  "use_case_source_id": "String", // Wajib (e.g., "UC-001")
-  "member_source_ids": ["String", "String"] // Array ID anggota (e.g., ["FUI0001", "FUI0002"])
-}
-```
-
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Pendaftaran tim berhasil dikirim dan menunggu validasi.",
-  "data": {
-    "group_id": "UUID",
-    "status": "pending_validation"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
-**Error Response (Status 400 - Invalid Composition):**
-
-```json
-{
-  "message": "Komposisi tim tidak memenuhi syarat: Machine Learning harus >= 2.",
-  "error": {
-    "code": "INVALID_COMPOSITION"
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
-
-**Error Response (Status 400 - Double Submission):**
-
-```json
-{
-  "message": "Beberapa anggota sudah terdaftar di tim lain yang valid.",
-  "error": {
-    "code": "DOUBLE_SUBMISSION",
-    "fields": {
-      "doubleUserIds": ["UUID"]
     }
-  },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+    ```
 
 ---
 
-## 🛡️ 4. Admin: Team Validation & Rules
+## 4. 📦 Deliverables Features
 
-**Base URL:** `/api/admin`
-**Authorization:** Bearer Token (Role: `admin`)
+**Base URL:** `/api/group` (Student) / `/api/admin` (Admin)
 
-### a. Set Group Rules
-
-Mengatur aturan komposisi tim.
-
-- **Endpoint:** `POST /rules`
-- **Headers:** `Authorization: Bearer <token>`
-
-**Request Body:**
-
-```json
-{
-  "batch_id": "String", // Wajib
-  "rules": [
+### a. Submit Deliverable (Student)
+-   **Endpoint:** `POST /api/group/deliverables`
+-   **Body:**
+    ```json
     {
-      "user_attribute": "learning_path",
-      "attribute_value": "Machine Learning",
-      "operator": ">=",
-      "value": "2"
+      "document_type": "PROJECT_PLAN", // ENUM: PROJECT_PLAN, FINAL_REPORT, PRESENTATION_VIDEO
+      "file_path": "https://drive.google.com/file/d/...",
+      "description": "Submitted by Budi"
     }
-  ]
-}
-```
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Dokumen berhasil dikumpulkan.",
+      "data": {
+        "id": "uuid-deliv-1",
+        "document_type": "PROJECT_PLAN",
+        "file_path": "...",
+        "status": "SUBMITTED",
+        "submitted_at": "..."
+      }
+    }
+    ```
 
-**Success Response (Status 201 Created):**
-
-```json
-{
-  "message": "Aturan grup berhasil disimpan.",
-  "data": [ ... ],
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+### b. List Deliverables (Admin)
+-   **Endpoint:** `GET /api/admin/deliverables`
+-   **Query Params:** `document_type=PROJECT_PLAN`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil daftar deliverables.",
+      "data": [
+        {
+          "id": "uuid-deliv-1",
+          "document_type": "PROJECT_PLAN",
+          "file_path": "...",
+          "submitted_at": "...",
+          "group": { "group_name": "Capstone Team A" }
+        }
+      ]
+    }
+    ```
 
 ---
 
-### b. Validate Group Registration
+## 5. 📅 Capstone Worksheet (Check-in) Features
 
-Memvalidasi pendaftaran tim (Terima/Tolak).
-**Catatan:** Sistem akan mengirimkan **email notifikasi** ke seluruh anggota tim berisi status validasi (Diterima/Ditolak) beserta alasannya (jika ditolak).
+**Base URL:** `/api/group` (Student) / `/api/admin` (Admin)
 
-- **Endpoint:** `POST /groups/:groupId/validate`
-- **Headers:** `Authorization: Bearer <token>`
-- **Params:** `groupId` (UUID)
+### a. Submit Worksheet (Student)
+-   **Endpoint:** `POST /api/group/worksheets`
+-   **Body:**
+    ```json
+    {
+      "period_start": "2023-10-01",
+      "period_end": "2023-10-14",
+      "activity_description": "Membuat API Login dan Register.",
+      "proof_url": "https://github.com/capstone-team/backend/pull/1"
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Worksheet berhasil dikumpulkan.",
+      "data": {
+        "id": "uuid-ws-1",
+        "activity_description": "Membuat API...",
+        "status": "submitted",
+        "submitted_at": "..."
+      }
+    }
+    ```
 
-**Request Body:**
+### b. List My Worksheets (Student)
+-   **Endpoint:** `GET /api/group/worksheets`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil riwayat worksheet.",
+      "data": [
+        {
+          "id": "uuid-ws-1",
+          "period_start": "...",
+          "status": "approved",
+          "feedback": "Good job!"
+        }
+      ]
+    }
+    ```
 
-```json
-{
-  "status": "accepted", // atau "rejected"
-  "rejection_reason": "String" // Opsional jika rejected
-}
-```
+### c. List All Worksheets (Admin)
+-   **Endpoint:** `GET /api/admin/worksheets`
+-   **Query Optional:** `?status=submitted`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil daftar worksheet.",
+      "data": [
+        {
+          "id": "uuid-ws-1",
+          "user_ref": "uuid-user-1",
+          "activity_description": "...",
+          "users": { "name": "Budi", "email": "budi@mail.com" }
+        }
+      ]
+    }
+    ```
 
-**Success Response (Status 200 OK):**
+### d. Validate Worksheet (Admin)
+-   **Endpoint:** `PUT /api/admin/worksheets/:id/validate`
+-   **Body:**
+    ```json
+    {
+      "status": "approved", // approved, rejected, late
+      "feedback": "Deskripsi sangat jelas, lanjutkan."
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Worksheet berhasil divalidasi.",
+      "data": {
+        "id": "uuid-ws-1",
+        "status": "approved",
+        "feedback": "Deskripsi sangat jelas, lanjutkan."
+      }
+    }
+    ```
 
-```json
-{
-  "message": "Grup berhasil divalidasi sebagai accepted.",
-  "data": { ... },
-  "meta": {
-    "timestamp": "ISO8601"
-  }
-}
-```
+---
+
+## 6. 🔄 360-Degree Feedback Features
+
+**Base URL:** `/api/group` (Student) / `/api/admin` (Admin)
+
+### a. Submit Feedback (Student)
+-   **Endpoint:** `POST /api/group/feedback`
+-   **Body:**
+    ```json
+    {
+      "reviewee_source_id": "FUI0002",
+      "is_member_active": true,
+      "contribution_level": "signifikan",
+      "reason": "Sangat proaktif dalam coding."
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Penilaian berhasil dikirim.",
+      "data": {
+        "id": "uuid-fb-1",
+        "contribution_level": "signifikan",
+        "created_at": "..."
+      }
+    }
+    ```
+
+### b. Get Feedback Status (Student)
+-   **Endpoint:** `GET /api/group/feedback/status`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil status penilaian.",
+      "data": [
+        { "name": "Siti (FUI0002)", "status": "pending" },
+        { "name": "Andi (FUI0003)", "status": "completed" }
+      ]
+    }
+    ```
+
+### c. Export Feedback Data (Admin)
+-   **Endpoint:** `GET /api/admin/feedback/export`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil data export feedback.",
+      "data": [
+        {
+          "reviewer_name": "Budi",
+          "reviewee_name": "Siti",
+          "group_name": "Capstone Team A",
+          "contribution": "signifikan",
+          "reason": "..."
+        }
+      ]
+    }
+    ```
+
+---
+
+## 7. 🛡️ Admin Management Features
+
+**Base URL:** `/api/admin` (Auth: Admin)
+
+### a. List All Groups
+Melihat semua grup yang terdaftar.
+
+-   **Endpoint:** `GET /groups`
+-   **Body:** _(None)_
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil semua grup.",
+      "data": [
+        {
+          "id": "uuid-group-1",
+          "group_name": "Capstone A",
+          "status": "pending_validation",
+          "creator_name": "Budi",
+          "created_at": "2023-10-01..."
+        }
+      ],
+      "meta": { "timestamp": "..." }
+    }
+    ```
+
+### b. Validate Group (Accept/Reject)
+Validasi pendaftaran tim mahasiswa.
+
+-   **Endpoint:** `POST /groups/:groupId/validate`
+-   **Body:**
+    ```json
+    {
+      "status": "accepted", // accepted / rejected
+      "rejection_reason": "" // Optional
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Grup berhasil divalidasi sebagai accepted.",
+      "data": { "id": "uuid-group-1", "status": "accepted" },
+      "meta": { "timestamp": "..." }
+    }
+    ```
+
+### c. Create Group (Manual)
+Membuat grup oleh admin (jarang dipakai jika registrasi via user).
+
+-   **Endpoint:** `POST /groups`
+-   **Body:**
+    ```json
+    {
+      "group_name": "Tim Cadangan",
+      "batch_id": "asah-batch-1"
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Grup berhasil dibuat.",
+      "group": { "id": "uuid-group-new", "group_name": "Tim Cadangan" }
+    }
+    ```
+
+### d. Set Composition Rules
+Mengatur aturan batch (ex: Machine Learning min 2 orang).
+
+-   **Endpoint:** `POST /rules`
+-   **Body:**
+    ```json
+    {
+      "batch_id": "asah-batch-1",
+      "rules": [
+        {
+          "user_attribute": "learning_path",
+          "attribute_value": "Machine Learning",
+          "operator": ">=",
+          "value": 2
+        }
+      ]
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Aturan grup berhasil disimpan."
+    }
+    ```

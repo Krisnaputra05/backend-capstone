@@ -36,7 +36,27 @@ const buildResponse = (
   return response;
 };
 
+/**
+ * Mengirim respons error standar.
+ * @param {object} res - Objek response Express.
+ * @param {number} status - Kode status HTTP.
+ * @param {string} message - Pesan error.
+ * @param {string} code - Kode error internal (e.g., "VALIDATION_FAILED").
+ * @param {object} fields - Detail field yang error (opsional).
+ */
+const buildErrorResponse = (res, status, message, code, fields = {}) => {
+  return res.status(status).json({
+    message,
+    error: {
+      code,
+      ...(Object.keys(fields).length > 0 && { fields }),
+    },
+    meta: { timestamp: new Date().toISOString() },
+  });
+};
+
 // Ekspor fungsi agar bisa digunakan di file controller Anda
 module.exports = {
   buildResponse,
+  buildErrorResponse,
 };

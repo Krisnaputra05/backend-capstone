@@ -7,7 +7,44 @@ const {
   getGroupRules,
   getTeam,
 } = require("../controllers/userController");
+const {
+  submitWorksheet,
+  getMyWorksheets,
+} = require("../controllers/worksheetController");
+const {
+  submitFeedback,
+  getFeedbackStatus,
+} = require("../controllers/feedbackController");
 const { submitDeliverable } = require("../controllers/deliverableController");
+
+router.post(
+  "/worksheets",
+  authenticateCustomJWT,
+  authorizeRoles(["STUDENT"]),
+  submitWorksheet
+);
+
+router.get(
+  "/worksheets",
+  authenticateCustomJWT,
+  authorizeRoles(["STUDENT"]),
+  getMyWorksheets
+);
+
+// 360 Feedback
+router.post(
+  "/feedback",
+  authenticateCustomJWT,
+  authorizeRoles(["STUDENT"]),
+  submitFeedback
+);
+
+router.get(
+  "/feedback/status",
+  authenticateCustomJWT,
+  authorizeRoles(["STUDENT"]),
+  getFeedbackStatus
+);
 
 router.post(
   "/docs",

@@ -23,7 +23,6 @@ const buildErrorResponse = (res, status, message, code, fields = {}) => {
   });
 };
 
-// FIXME : SEBELUM MELAKUKAN PENDAFTARAN TIM,UNTUK PROFILE HARUS SUDAH DILENGKAPI DENGAN FIELD LEARNING PATH,UNIVERSITAS,JURUSAN.
 /**
  * GET /api/user/profile
  */

@@ -10,6 +10,11 @@ const {
   validateGroupRegistration,
 } = require("../controllers/adminController");
 const { listDeliverables } = require("../controllers/adminDeliverableController");
+const {
+  adminListWorksheets,
+  validateWorksheet,
+} = require("../controllers/worksheetController");
+const { adminGetFeedbackExport } = require("../controllers/feedbackController");
 
 // --- Rute Grup ---
 
@@ -71,6 +76,30 @@ router.get(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   listDeliverables
+);
+
+// List Worksheets
+router.get(
+  "/worksheets",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  adminListWorksheets
+);
+
+// Validate Worksheet
+router.put(
+  "/worksheets/:id/validate",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  validateWorksheet
+);
+
+// Export Feedback Data
+router.get(
+  "/feedback/export",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  adminGetFeedbackExport
 );
 
 module.exports = router;
