@@ -6,11 +6,7 @@ const {
   createDocService,
   getGroupRulesService,
   registerTeamService,
-  createDocService,
-  getGroupRulesService,
-  registerTeamService,
   getTeamService,
-  updateProfileService,
 } = require("../services/userService");
 const { sendTeamRegistrationEmail } = require("../services/emailService");
 const { supabase } = require("../config/supabaseClient");
@@ -265,5 +261,4 @@ module.exports = {
   getGroupRules,
   registerTeam,
   getTeam,
-  updateProfile,
 };
