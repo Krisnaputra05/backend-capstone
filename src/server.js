@@ -10,12 +10,7 @@ const groupRouter = require("./routes/group");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: "*", // Atau gunakan ["http://localhost:5173", "https://frontend.com"]
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+app.use(cors());
 
 // Handle Preflight Request Manual (Optional, for safety)
 app.options("*", cors());
