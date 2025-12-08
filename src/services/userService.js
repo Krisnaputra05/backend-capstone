@@ -18,6 +18,72 @@ async function getProfileService(userId) {
 }
 
 /**
+ * Update user profile
+ */
+async function updateProfileService(userId, { name, university, learning_group, learning_path }) {
+  // Hanya update yang ada nilainya
+  const updates = {};
+  if (name) updates.name = name;
+  if (university) updates.university = university;
+  if (learning_group) updates.learning_group = learning_group;
+
+  // Validasi Enum Learning Path
+  if (learning_path) {
+    const validPaths = [
+      "Machine Learning (ML)", 
+      "Front-End Web & Back-End with AI (FEBE)", 
+      "React & Back-End with AI (REBE)"
+    ];
+    if (!validPaths.includes(learning_path)) {
+      throw { 
+        code: "INVALID_LEARNING_PATH", 
+        message: "Learning Path tidak valid. Pilih antara: ML, FEBE, atau REBE." 
+      };
+    }
+    
+    // Logic: Cek apakah user sudah punya learning path sebelumnya
+    // Jika sudah ada (tidak null/empty), maka TIDAK BOLEH ganti lagi ("Cuma sekali aja")
+    const { data: currentUser, error: userErr } = await supabase
+      .from("users")
+      .select("learning_path")
+      .eq("id", userId)
+      .single();
+
+    if (!userErr && currentUser && currentUser.learning_path) {
+       // Cek apakah nilai baru beda dengan yang lama. Kalau sama, ya skip aja (allow).
+       // Tapi kalau beda, reject.
+       if (currentUser.learning_path !== learning_path) {
+          throw { 
+            code: "LEARNING_PATH_LOCKED", 
+            message: "Learning Path sudah dipilih sebelumnya dan tidak bisa diubah lagi." 
+          };
+       }
+    }
+    
+    updates.learning_path = learning_path;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw { code: "NO_CHANGES", message: "Tidak ada data yang diubah." };
+  }
+
+  updates.updated_at = new Date().toISOString();
+
+  const { data: user, error } = await supabase
+    .from("users")
+    .update(updates)
+    .eq("id", userId)
+    .select("name, email, role, university, learning_group, learning_path")
+    .single();
+
+  if (error) {
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal memperbarui profil." };
+  }
+
+  return user;
+}
+
+/**
  * List available docs
  */
 async function listAvailableDocsService() {
@@ -362,6 +428,7 @@ module.exports = {
   listProjectTimelineService,
   listUseCasesService,
   createDocService,
+  updateProfileService,
   getGroupRulesService,
   registerTeamService,
   getTeamService,

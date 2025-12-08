@@ -5,13 +5,19 @@ const {
   getProfile,
   listAvailableDocs,
   listProjectTimeline,
+  listAvailableDocs,
+  listProjectTimeline,
   listUseCases,
+  updateProfile,
 } = require("../controllers/userController");
 
 // Semua endpoint dilindungi oleh authenticateCustomJWT
 
 // GET /profile
 router.get("/profile", authenticateCustomJWT, getProfile);
+
+// PUT /profile (Edit Profile)
+router.put("/profile", authenticateCustomJWT, updateProfile);
 
 // GET /docs
 router.get("/docs", authenticateCustomJWT, listAvailableDocs);

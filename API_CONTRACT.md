@@ -14,10 +14,12 @@ Dokumentasi lengkap untuk endpoint yang tersedia di backend Capstone Project Man
 ---
 
 ## 📚 Reference: Valid Domains (Learning Paths)
-Berikut adalah daftar **Learning Path (Domain)** yang valid untuk mahasiswa dan aturan komposisi tim:
+Berikut adalah daftar **Learning Path (Domain)** yang valid.
+**PENTING**: Learning Path pengguna hanya bisa diset **SEKALI** (jika masih kosong). Setelah diisi, tidak bisa diubah lagi.
+
 1.  **Machine Learning (ML)**
-2.  **Cloud Computing (CC)**
-3.  **Mobile Development (MD)**
+2.  **Front-End Web & Back-End with AI (FEBE)**
+3.  **React & Back-End with AI (REBE)**
 
 ---
 
@@ -126,13 +128,43 @@ Masuk ke sistem.
         "email": "student@indo.com",
         "role": "student",
         "university": "Universitas Indonesia",
-        "learning_group": "M01"
+        "learning_group": "M01",
+        "learning_path": "Machine Learning (ML)"
       },
       "meta": { "timestamp": "..." }
     }
     ```
 
-### b. List Available Docs
+### b. Update Profile
+Memperbarui data profil pengguna.
+**Catatan:** `learning_path` hanya bisa diset **SEKALI**. Jika sudah ada nilainya, tidak bisa diubah lagi.
+-   **Endpoint:** `PUT /profile`
+-   **Body:**
+    ```json
+    {
+      "name": "Budi Santoso",
+      "university": "Institut Teknologi Bandung",
+      "learning_group": "M02",
+      "learning_path": "Machine Learning (ML)" // Opsional, hanya jika belum diset
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Profil berhasil diperbarui.",
+      "data": {
+        "name": "Budi Santoso",
+        "email": "student@indo.com",
+        "role": "student",
+        "university": "Institut Teknologi Bandung",
+        "learning_group": "M02",
+        "learning_path": "Machine Learning (ML)"
+      },
+      "meta": { "timestamp": "..." }
+    }
+    ```
+
+### c. List Available Docs
 -   **Endpoint:** `GET /docs`
 -   **Response (200 OK):**
     ```json
@@ -216,6 +248,44 @@ Masuk ke sistem.
           { "name": "Siti", "role": "member", "learning_path": "Machine Learning" }
         ]
       }
+    }
+    ```
+
+### c. Upload Document (General)
+Mengupload dokumen umum ke grup.
+-   **Endpoint:** `POST /docs`
+-   **Body:**
+    ```json
+    {
+      "group_id": "uuid-group-1",
+      "url": "https://storage.com/file.pdf"
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Dokumen berhasil dibuat.",
+      "doc_id": "uuid-doc-new"
+    }
+    ```
+
+### d. Get Group Rules
+Melihat aturan komposisi tim yang aktif.
+-   **Endpoint:** `GET /rules`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil aturan grup.",
+      "data": [
+        {
+          "id": "uuid-rule-1",
+          "user_attribute": "learning_path",
+          "attribute_value": "Machine Learning",
+          "operator": ">=",
+          "value": "2",
+          "is_active": true
+        }
+      ]
     }
     ```
 
