@@ -67,8 +67,7 @@ Mendaftarkan pengguna baru.
     {
       "email": "student@indo.com",
       "password": "password123",
-      "name": "Budi Santoso",
-      "role": "student"
+      "name": "Budi Santoso"
     }
     ```
 -   **Response (201 Created):**
@@ -129,7 +128,8 @@ Masuk ke sistem.
         "role": "student",
         "university": "Universitas Indonesia",
         "learning_group": "M01",
-        "learning_path": "Machine Learning (ML)"
+        "learning_path": "Machine Learning (ML)",
+        "users_source_id": "FUI0001"
       },
       "meta": { "timestamp": "..." }
     }

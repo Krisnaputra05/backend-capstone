@@ -39,7 +39,7 @@ async function login(req, res) {
 
 // Registrasi pengguna baru
 async function register(req, res) {
-  const { email, password, name, role } = req.body || {};
+  const { email, password, name } = req.body || {};
 
   // 1. Validasi Input Dasar
   const errorFields = {};
@@ -51,14 +51,12 @@ async function register(req, res) {
     return buildErrorResponse(res, 400, "Data pendaftaran tidak lengkap.", "VALIDATION_FAILED", errorFields);
   }
 
-  // 2. Validasi Role
-  const normalizedRole = (role || "student").toLowerCase();
-  if (!["student", "admin"].includes(normalizedRole)) {
-    return buildErrorResponse(res, 400, "Role tidak valid.", "INVALID_ROLE", { role: "Role harus 'student' atau 'admin'." });
-  }
+  // 2. Force Role to 'student'
+  // User tidak bisa set role sendiri saat register
+  const fixedRole = "student";
 
   try {
-    const result = await registerUser({ email, password, name, role: normalizedRole });
+    const result = await registerUser({ email, password, name, role: fixedRole });
     return res.status(201).json({
       message: "Pendaftaran berhasil. Silakan login.",
       data: result,
