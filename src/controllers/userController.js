@@ -3,7 +3,9 @@ const {
   listAvailableDocsService,
   listProjectTimelineService,
   listUseCasesService,
+  listUseCasesService,
   createDocService,
+  updateProfileService,
   getGroupRulesService,
   registerTeamService,
   getTeamService,
@@ -40,6 +42,35 @@ async function getProfile(req, res) {
       res,
       status,
       err.message || "Gagal mengambil profil.",
+      err.code || "INTERNAL_SERVER_ERROR"
+    );
+  }
+}
+
+/**
+ * PUT /api/user/profile
+ */
+async function updateProfile(req, res) {
+  const { name, university, learning_group, learning_path } = req.body;
+
+  try {
+    const user = await updateProfileService(req.user.userId, {
+      name,
+      university,
+      learning_group,
+      learning_path,
+    });
+    return res.status(200).json({
+      message: "Profil berhasil diperbarui.",
+      data: user,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    const status = err.code === "LEARNING_PATH_LOCKED" || err.code === "INVALID_LEARNING_PATH" ? 400 : 500;
+    return buildErrorResponse(
+      res,
+      status,
+      err.message || "Gagal memperbarui profil.",
       err.code || "INTERNAL_SERVER_ERROR"
     );
   }
@@ -257,6 +288,7 @@ module.exports = {
   listAvailableDocs,
   listProjectTimeline,
   listUseCases,
+  updateProfile,
   createDoc,
   getGroupRules,
   registerTeam,

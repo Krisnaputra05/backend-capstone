@@ -499,20 +499,31 @@ Melihat semua grup yang terdaftar.
     ```json
     {
       "message": "Berhasil mengambil semua grup.",
-      "data": [
-        {
-          "id": "uuid-group-1",
-          "group_name": "Capstone A",
-          "status": "pending_validation",
-          "creator_name": "Budi",
-          "created_at": "2023-10-01..."
-        }
       ],
       "meta": { "timestamp": "..." }
     }
     ```
 
-### b. Validate Group (Accept/Reject)
+### b. Update Student Learning Path (Override)
+Endpoint khusus Admin untuk mengubah Learning Path student (bisa mengubah meskipun student sudah pernah set).
+
+-   **Endpoint:** `PUT /users/:userId/learning-path`
+-   **Body:**
+    ```json
+    {
+      "learning_path": "Front-End Web & Back-End with AI (FEBE)" 
+    }
+    ```
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Learning path student berhasil diperbarui oleh admin.",
+      "data": { ... },
+      "meta": { ... }
+    }
+    ```
+
+### c. Validate Group (Accept/Reject)
 Validasi pendaftaran tim mahasiswa.
 
 -   **Endpoint:** `POST /groups/:groupId/validate`

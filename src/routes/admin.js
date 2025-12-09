@@ -8,6 +8,7 @@ const {
   listAllGroups,
   setGroupRules,
   validateGroupRegistration,
+  updateStudentLearningPath,
 } = require("../controllers/adminController");
 const { listDeliverables } = require("../controllers/adminDeliverableController");
 const {
@@ -40,6 +41,14 @@ router.get(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   listAllGroups
+);
+
+// Update Student Learning Path (Override)
+router.put(
+  "/users/:userId/learning-path",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  updateStudentLearningPath
 );
 
 // --- Rute Project Status ---

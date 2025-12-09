@@ -5,6 +5,7 @@ const {
   listAllGroupsService,
   setGroupRulesService,
   validateGroupRegistrationService,
+  updateStudentLearningPathService,
 } = require("../services/adminService");
 
 // Helper untuk format error response
@@ -41,6 +42,35 @@ async function createGroup(req, res) {
     });
   } catch (err) {
     return buildErrorResponse(res, 500, err.message || "Gagal membuat grup.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}
+
+/**
+ * PUT /api/admin/users/:userId/learning-path
+ */
+async function updateStudentLearningPath(req, res) {
+  const { userId } = req.params;
+  const { learning_path } = req.body;
+
+  if (!learning_path) {
+    return buildErrorResponse(res, 400, "Learning path wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const user = await updateStudentLearningPathService(userId, { learning_path });
+    return res.status(200).json({
+      message: "Learning path student berhasil diperbarui oleh admin.",
+      data: user,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    const status = err.code === "INVALID_LEARNING_PATH" ? 400 : 500;
+    return buildErrorResponse(
+      res,
+      status,
+      err.message || "Gagal memperbarui learning path.",
+      err.code || "INTERNAL_SERVER_ERROR"
+    );
   }
 }
 
@@ -161,4 +191,5 @@ module.exports = {
   listAllGroups,
   setGroupRules,
   validateGroupRegistration,
+  updateStudentLearningPath,
 };

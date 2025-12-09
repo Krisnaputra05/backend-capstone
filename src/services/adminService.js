@@ -1,4 +1,37 @@
 const { supabase } = require("../config/supabaseClient");
+const { sendEmail } = require("./emailService"); // Assuming email service is used here or available
+
+/**
+ * Update Student Learning Path (Admin Override)
+ */
+async function updateStudentLearningPathService(userId, { learning_path }) {
+  // Validate Enum
+  const validPaths = [
+    "Machine Learning (ML)", 
+    "Front-End Web & Back-End with AI (FEBE)", 
+    "React & Back-End with AI (REBE)"
+  ];
+  if (!validPaths.includes(learning_path)) {
+    throw { 
+      code: "INVALID_LEARNING_PATH", 
+      message: "Learning Path tidak valid. Pilih antara: ML, FEBE, atau REBE." 
+    };
+  }
+
+  // Admin Override: No check for previous value ("Bebas")
+  const { data: user, error } = await supabase
+    .from("users")
+    .update({ learning_path, updated_at: new Date().toISOString() })
+    .eq("id", userId)
+    .select("id, name, email, learning_path")
+    .single();
+
+  if (error) {
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal memperbarui learning path student." };
+  }
+
+  return user;
+}
 
 /**
  * Create a new capstone group
@@ -222,10 +255,11 @@ async function listDeliverablesService({ document_type, use_case_id }) {
 
 module.exports = {
   createGroupService,
-  updateProjectStatusService,
   updateGroupService,
+  updateProjectStatusService,
   listAllGroupsService,
   setGroupRulesService,
   validateGroupRegistrationService,
+  updateStudentLearningPathService,
   listDeliverablesService,
 };

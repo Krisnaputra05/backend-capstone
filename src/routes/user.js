@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateCustomJWT } = require("../middleware/auth");
 const {
   getProfile,
+  updateProfile,
   listAvailableDocs,
   listProjectTimeline,
   listUseCases,
@@ -13,6 +14,8 @@ const {
 // GET /profile
 router.get("/profile", authenticateCustomJWT, getProfile);
 
+// PUT /profile (Edit Profile)
+router.put("/profile", authenticateCustomJWT, updateProfile);
 
 // GET /docs
 router.get("/docs", authenticateCustomJWT, listAvailableDocs);
