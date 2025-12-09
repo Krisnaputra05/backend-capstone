@@ -29,20 +29,43 @@ async function submitFeedbackService(reviewerId, data) {
   // Check Reviewer Group
   const { data: reviewerGroup } = await supabase
     .from("capstone_group_member")
-    .select("group_ref, capstone_groups!inner(status)")
+    .select("group_ref")
     .eq("user_ref", reviewerId)
-    .eq("capstone_groups.status", "accepted")
-    .single();
+    .maybeSingle();
+
+  if (!reviewerGroup) {
+    // Cek apakah ada data yang "nyangkut" (ada user_id tapi user_ref null)
+    try {
+      const { data: user } = await supabase.from("users").select("users_source_id").eq("id", reviewerId).single();
+      if (user && user.users_source_id) {
+        const { data: corruptMember } = await supabase
+          .from("capstone_group_member")
+          .select("id")
+          .eq("user_id", user.users_source_id)
+          .maybeSingle();
+        
+        if (corruptMember) {
+          throw { code: "DATA_ERROR", message: "Data keanggotaan Anda tidak valid (Inkonsistensi Database). Harap jalankan script perbaikan SQL." };
+        }
+      }
+    } catch (ignore) {}
+
+    throw { code: "NO_TEAM", message: "Anda belum terdaftar dalam tim manapun." };
+  }
 
   // Check Reviewee Group
   const { data: revieweeGroup } = await supabase
     .from("capstone_group_member")
     .select("group_ref")
     .eq("user_ref", revieweeId)
-    .single();
+    .maybeSingle();
 
-  if (!reviewerGroup || !revieweeGroup || reviewerGroup.group_ref !== revieweeGroup.group_ref) {
-    throw { code: "DIFFERENT_TEAM", message: "Anda hanya dapat menilai anggota tim Anda sendiri." };
+  if (!revieweeGroup) {
+    throw { code: "DIFFERENT_TEAM", message: "Anggota yang dinilai belum terdaftar dalam grup manapun." };
+  }
+
+  if (reviewerGroup.group_ref !== revieweeGroup.group_ref) {
+    throw { code: "DIFFERENT_TEAM", message: "Anda hanya dapat menilai anggota tim Anda sendiri (Group ID berbeda)." };
   }
 
   // 3. Check if already submitted
@@ -55,7 +78,7 @@ async function submitFeedbackService(reviewerId, data) {
 
   if (existing) {
     throw { code: "ALREADY_SUBMITTED", message: "Anda sudah menilai anggota ini." };
-  }
+  } 
 
   // 4. Insert Feedback
   const { data: feedback, error } = await supabase

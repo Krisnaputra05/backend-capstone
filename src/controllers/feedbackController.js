@@ -38,6 +38,7 @@ async function submitFeedback(req, res) {
       "USER_NOT_FOUND",
       "SELF_REVIEW",
       "DIFFERENT_TEAM",
+      "NO_TEAM",
       "ALREADY_SUBMITTED"
     ].includes(err.code) ? 400 : 500;
 

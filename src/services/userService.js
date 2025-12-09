@@ -341,13 +341,17 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
   }
 
   // 5. Insert Members
-  const memberInserts = member_ids.map((uid) => ({
-    group_ref: group.id,
-    user_ref: uid,
-    role: uid === creatorId ? "leader" : "member",
-    state: "active",
-    joined_at: new Date().toISOString(),
-  }));
+  const memberInserts = member_ids.map((uid) => {
+    const memberData = members.find((m) => m.id === uid);
+    return {
+      group_ref: group.id,
+      user_ref: uid,
+      user_id: memberData ? memberData.users_source_id : null, // Masukkan Source ID ke kolom user_id
+      role: uid === creatorId ? "leader" : "member",
+      state: "active",
+      joined_at: new Date().toISOString(),
+    };
+  });
 
   const { error: memberInsertErr } = await supabase
     .from("capstone_group_member")
