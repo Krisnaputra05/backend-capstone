@@ -6,7 +6,7 @@ const { supabase } = require("../config/supabaseClient");
 async function getProfileService(userId) {
   const { data: user, error } = await supabase
     .from("users")
-    .select("name, email, role, university, learning_group, users_source_id")
+    .select("name, email, role, university, learning_group, users_source_id, learning_path")
     .eq("id", userId)
     .single();
 
