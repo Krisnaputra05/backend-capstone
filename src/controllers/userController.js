@@ -3,7 +3,7 @@ const {
   listAvailableDocsService,
   listProjectTimelineService,
   listUseCasesService,
-  listUseCasesService,
+
   createDocService,
   updateProfileService,
   getGroupRulesService,
