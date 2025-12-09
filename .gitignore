@@ -7,5 +7,4 @@ coverage/
 *.log
 .idea/
 *.swp
-SCHEMA_UPDATE.sql
-EMAIL_GUIDE.md
+SCHEMA_UPDATES.sql

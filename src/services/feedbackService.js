@@ -119,7 +119,7 @@ async function getFeedbackStatusService(userId) {
 
   const { data: teamMembers } = await supabase
     .from("capstone_group_member")
-    .select("user_ref, users:user_ref(name, users_source_id)")
+    .select("user_ref, user_id, users:user_ref(name, users_source_id)")
     .eq("group_ref", myGroup.group_ref)
     .neq("user_ref", userId); // Exclude self
 
@@ -132,8 +132,8 @@ async function getFeedbackStatusService(userId) {
   const completedIds = new Set(completedReviews?.map(r => r.reviewee_user_ref));
 
   return teamMembers.map(m => ({
-    name: m.users.name,
-    source_id: m.users.users_source_id,
+    name: m.users?.name || "Unknown Member",
+    source_id: m.users?.users_source_id || m.user_id, // Fallback ke user_id dari tabel member
     status: completedIds.has(m.user_ref) ? "completed" : "pending"
   }));
 }
