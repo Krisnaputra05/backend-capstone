@@ -460,8 +460,9 @@ Melihat aturan komposisi tim yang aktif.
     {
       "message": "Berhasil mengambil status penilaian.",
       "data": [
-        { "name": "Siti (FUI0002)", "status": "pending" },
-        { "name": "Andi (FUI0003)", "status": "completed" }
+      "data": [
+        { "name": "Siti", "source_id": "FUI0002", "status": "pending" },
+        { "name": "Andi", "source_id": "FUI0003", "status": "completed" }
       ]
     }
     ```
