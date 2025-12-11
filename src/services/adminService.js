@@ -1,5 +1,5 @@
 const { supabase } = require("../config/supabaseClient");
-const { sendEmail } = require("./emailService"); // Assuming email service is used here or available
+const { sendTeamValidationEmail } = require("./emailService");
 
 /**
  * Update Student Learning Path (Admin Override)
@@ -196,13 +196,29 @@ async function validateGroupRegistrationService(groupId, status, rejection_reaso
     throw { code: "DB_UPDATE_FAILED", message: "Gagal memvalidasi grup." };
   }
 
-  // 2. Mock Email Notification
-  const emailSubject = status === "accepted" ? "Pendaftaran Tim Diterima" : "Pendaftaran Tim Ditolak";
-  const emailBody = status === "accepted" 
-    ? `Selamat! Tim Anda ${group.group_name} telah diterima.` 
-    : `Maaf, tim Anda ditolak. Alasan: ${rejection_reason || "Tidak memenuhi kriteria."}`;
-  
-  console.log(`[MOCK EMAIL] To: ${group.creator_user_ref?.email}, Subject: ${emailSubject}, Body: ${emailBody}`);
+  // 2. Send Email Notification (Active Members)
+  try {
+    // Get all user emails in the group
+    const { data: members } = await supabase
+      .from("capstone_group_member")
+      .select("user_ref, users:user_ref(email)")
+      .eq("group_ref", groupId)
+      .eq("is_active", true); // Assuming there's an active flag or similar, otherwise remove filter
+
+    if (members && members.length > 0) {
+      const emails = members
+        .map(m => m.users?.email)
+        .filter(email => email); // Filter out null/undefined
+
+      if (emails.length > 0) {
+        // Send async
+        sendTeamValidationEmail(emails, group.group_name, status, rejection_reason)
+          .catch(err => console.error("Failed to send validation emails:", err));
+      }
+    }
+  } catch (emailErr) {
+    console.error("Error sending validation emails:", emailErr);
+  }
 
   return group;
 }

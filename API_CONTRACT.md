@@ -525,14 +525,14 @@ Endpoint khusus Admin untuk mengubah Learning Path student (bisa mengubah meskip
     ```
 
 ### c. Validate Group (Accept/Reject)
-Validasi pendaftaran tim mahasiswa.
+Validasi pendaftaran tim mahasiswa. **(Mengirim Email Notifikasi ke semua anggota tim)**
 
 -   **Endpoint:** `POST /groups/:groupId/validate`
 -   **Body:**
     ```json
     {
       "status": "accepted", // accepted / rejected
-      "rejection_reason": "" // Optional
+      "rejection_reason": "" // Optional, required if rejected
     }
     ```
 -   **Response (200 OK):**
@@ -544,7 +544,7 @@ Validasi pendaftaran tim mahasiswa.
     }
     ```
 
-### c. Create Group (Manual)
+### d. Create Group (Manual)
 Membuat grup oleh admin (jarang dipakai jika registrasi via user).
 
 -   **Endpoint:** `POST /groups`
@@ -563,7 +563,7 @@ Membuat grup oleh admin (jarang dipakai jika registrasi via user).
     }
     ```
 
-### d. Set Composition Rules
+### e. Set Composition Rules
 Mengatur aturan batch (ex: Machine Learning min 2 orang).
 
 -   **Endpoint:** `POST /rules`
