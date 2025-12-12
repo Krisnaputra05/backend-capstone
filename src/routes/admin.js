@@ -9,6 +9,11 @@ const {
   setGroupRules,
   validateGroupRegistration,
   updateStudentLearningPath,
+  addMemberToGroup,
+  removeMemberFromGroup,
+  autoAssignMembers,
+  getUnassignedStudents,
+  createTimeline,
 } = require("../controllers/adminController");
 const { listDeliverables } = require("../controllers/adminDeliverableController");
 const {
@@ -49,6 +54,38 @@ router.put(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   updateStudentLearningPath
+);
+
+// Get Unassigned Students
+router.get(
+    "/users/unassigned",
+    authenticateCustomJWT,
+    authorizeRoles(["ADMIN"]),
+    getUnassignedStudents
+);
+
+// Add Member to Group
+router.post(
+    "/groups/:groupId/members",
+    authenticateCustomJWT,
+    authorizeRoles(["ADMIN"]),
+    addMemberToGroup
+);
+  
+// Remove Member from Group
+router.delete(
+    "/groups/:groupId/members/:userId",
+    authenticateCustomJWT,
+    authorizeRoles(["ADMIN"]),
+    removeMemberFromGroup
+);
+
+// Auto Assign (Randomize)
+router.post(
+    "/groups/auto-assign",
+    authenticateCustomJWT,
+    authorizeRoles(["ADMIN"]),
+    autoAssignMembers
 );
 
 // --- Rute Project Status ---
@@ -109,6 +146,14 @@ router.get(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   adminGetFeedbackExport
+);
+
+// Create Timeline (NEW)
+router.post(
+  "/timeline",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  createTimeline
 );
 
 module.exports = router;

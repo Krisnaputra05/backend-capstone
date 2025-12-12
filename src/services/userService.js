@@ -322,6 +322,13 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
     }
   }
 
+// Helper to generate Group Source ID (CAPS + Timestamp + Random)
+function generateGroupSourceId() {
+  const timestamp = new Date().getTime().toString().slice(-4);
+  const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+  return `CAPS-${timestamp}${random}`;
+}
+
   // 4. Simpan Data Tim
   const { data: group, error: groupErr } = await supabase
     .from("capstone_groups")
@@ -332,6 +339,7 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
       use_case_ref: use_case_id,
       status: "pending_validation",
       created_at: new Date().toISOString(),
+      capstone_groups_source_id: generateGroupSourceId(), // Auto-generate CAPS ID
     })
     .select()
     .single();

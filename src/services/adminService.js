@@ -33,10 +33,17 @@ async function updateStudentLearningPathService(userId, { learning_path }) {
   return user;
 }
 
+// Helper to generate Group Source ID (CAPS + Timestamp + Random)
+function generateGroupSourceId() {
+  const timestamp = new Date().getTime().toString().slice(-4);
+  const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+  return `CAPS-${timestamp}${random}`;
+}
+
 /**
  * Create a new capstone group
  */
-async function createGroupService(userId, { group_name, batch_id }) {
+async function createGroupService(userId, { group_name, batch_id, use_case_id }) {
   // 1. INSERT ke capstone_groups
   const { data: group, error: insertErr } = await supabase
     .from("capstone_groups")
@@ -44,10 +51,12 @@ async function createGroupService(userId, { group_name, batch_id }) {
       group_name,
       batch_id,
       creator_user_ref: userId,
-      status: "draft",
+      use_case_ref: use_case_id,
+      status: "pending_validation",
       created_at: new Date().toISOString(),
+      capstone_groups_source_id: generateGroupSourceId(), // Auto-generate CAPS ID
     })
-    .select("id, group_name, batch_id, creator_user_ref, status, created_at")
+    .select("id, group_name, batch_id, creator_user_ref, status, created_at, capstone_groups_source_id")
     .single();
 
   if (insertErr || !group) {
@@ -89,6 +98,24 @@ async function updateProjectStatusService(groupId) {
   }
 }
 
+/**
+ * Remove a member from a group (Admin Manual)
+ * Implements SOFT DELETE (updates state to inactive)
+ */
+async function removeMemberFromGroupService(groupId, userId) {
+  const { error } = await supabase
+    .from("capstone_group_member")
+    .update({ 
+      state: "inactive", 
+      left_at: new Date().toISOString() 
+    })
+    .eq("group_ref", groupId)
+    .eq("user_ref", userId);
+
+  if (error) {
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal menghapus anggota dari tim (Soft Delete)." };
+  }
+}
 /**
  * Update group details
  */
@@ -179,6 +206,8 @@ async function setGroupRulesService(batch_id, rules) {
  * Validate group registration
  */
 async function validateGroupRegistrationService(groupId, status, rejection_reason) {
+  console.log(`[DEBUG] validateGroupRegistrationService HIT! GroupID: ${groupId}, Status: ${status}`);
+
   // 1. Update status grup
   const updatePayload = {
     status: status,
@@ -193,28 +222,44 @@ async function validateGroupRegistrationService(groupId, status, rejection_reaso
     .single();
 
   if (error) {
+    console.error("[DEBUG] DB Update Error:", error);
     throw { code: "DB_UPDATE_FAILED", message: "Gagal memvalidasi grup." };
   }
+  
+  console.log("[DEBUG] Group status updated successfully.");
 
   // 2. Send Email Notification (Active Members)
   try {
     // Get all user emails in the group
-    const { data: members } = await supabase
+    const { data: members, error: memberError } = await supabase
       .from("capstone_group_member")
       .select("user_ref, users:user_ref(email)")
       .eq("group_ref", groupId)
-      .eq("is_active", true); // Assuming there's an active flag or similar, otherwise remove filter
+      .eq("state", "active"); 
+      
+    if (memberError) {
+      console.error("[DEBUG] Member Query Error:", memberError);
+    }
+    console.log("[DEBUG] Raw Members Query Result:", members);
 
     if (members && members.length > 0) {
+      console.log(`[DEBUG] Found ${members.length} active members.`);
       const emails = members
         .map(m => m.users?.email)
         .filter(email => email); // Filter out null/undefined
+      
+      console.log(`[DEBUG] Extracted emails:`, emails);
 
       if (emails.length > 0) {
         // Send async
         sendTeamValidationEmail(emails, group.group_name, status, rejection_reason)
+          .then(() => console.log(`[DEBUG] Email sent successfully to ${emails.length} recipients.`))
           .catch(err => console.error("Failed to send validation emails:", err));
+      } else {
+        console.log("[DEBUG] No valid emails found to send.");
       }
+    } else {
+      console.log("[DEBUG] No active members found for this group.");
     }
   } catch (emailErr) {
     console.error("Error sending validation emails:", emailErr);
@@ -269,6 +314,269 @@ async function listDeliverablesService({ document_type, use_case_id }) {
   }));
 }
 
+
+/**
+ * Add a member to a group (Admin Manual)
+ */
+async function addMemberToGroupService(groupId, userId) {
+  // 1. Check if user is already in an active group
+  const { data: existing } = await supabase
+    .from("capstone_group_member")
+    .select("id, group_ref")
+    .eq("user_ref", userId)
+    .eq("state", "active")
+    .maybeSingle();
+
+  if (existing) {
+    throw { code: "ALREADY_IN_TEAM", message: "User sudah tergabung dalam tim lain." };
+  }
+
+  // 2. Add to group
+  const { data, error } = await supabase
+    .from("capstone_group_member")
+    .insert({
+      group_ref: groupId,
+      user_ref: userId,
+      role: "member",
+      state: "active",
+      joined_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw { code: "DB_INSERT_FAILED", message: "Gagal menambahkan anggota ke tim." };
+  }
+  return data;
+}
+
+/**
+ * Remove a member from a group (Admin Manual)
+ * Implements SOFT DELETE (updates state to inactive)
+ */
+async function removeMemberFromGroupService(groupId, userId) {
+  const { error } = await supabase
+    .from("capstone_group_member")
+    .update({ 
+      state: "inactive", 
+      left_at: new Date().toISOString() 
+    })
+    .eq("group_ref", groupId)
+    .eq("user_ref", userId);
+
+  if (error) {
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal menghapus anggota dari tim (Soft Delete)." };
+  }
+}
+
+/**
+ * Auto Assign / Randomize Members
+ */
+/**
+ * Auto Assign / Randomize Members with Rules & Use Case
+ */
+async function autoAssignMembersService(batchId) {
+  // 1. Get All Unassigned Students
+  const unassigned = await getUnassignedStudentsService(batchId);
+
+  if (!unassigned || unassigned.length === 0) {
+    return { message: "Semua siswa sudah memiliki tim.", assigned_count: 0 };
+  }
+
+  // 2. Get Rules for Batch
+  const { data: rules } = await supabase
+    .from("capstone_group_rules")
+    .select("*")
+    .eq("batch_id", batchId)
+    .eq("is_active", true);
+
+  // 3. Get All Use Cases
+  const { data: useCases } = await supabase
+    .from("capstone_use_case")
+    .select("id, name");
+
+  // Helper to shuffle array
+  const shuffle = (array) => array.sort(() => 0.5 - Math.random());
+  
+  // Categorize students by Learning Path
+  const studentsByPath = {};
+  unassigned.forEach(s => {
+    const path = s.learning_path || "Unknown";
+    if (!studentsByPath[path]) studentsByPath[path] = [];
+    studentsByPath[path].push(s);
+  });
+
+  // Shuffle each bucket
+  Object.keys(studentsByPath).forEach(k => shuffle(studentsByPath[k]));
+
+  const assignments = [];
+  let createdGroupsCount = 0;
+  const TEAM_SIZE = 3; // Default target size
+
+  // --- TEAM BUILDING LOGIC ---
+  // Simple Strategy: Try to fulfill 'count' requirement from rules, then fill rest with random.
+  
+  // Parse Rules requirements (e.g. { "Machine Learning": 1, "Front-End": 1 })
+  const requiredCounts = {};
+  if (rules) {
+    rules.forEach(r => {
+      if (r.user_attribute === 'learning_path' && r.operator === '>=' && r.value) {
+        requiredCounts[r.attribute_value] = parseInt(r.value);
+      }
+    });
+  }
+
+  // Identify leftover students pool (initially all)
+  let pool = [...unassigned];
+
+  while (pool.length > 0) {
+    // Stop if remaining students are too few to form a meaningful group (e.g. < 2), 
+    // unless we want to force them into a small group. Let's force them.
+
+    // 1. Prepare ingredients for ONE team
+    const teamMembers = [];
+    
+    // A. Try to satisfy rules first
+    for (const [path, reqCount] of Object.entries(requiredCounts)) {
+       // Search for students with this path in pool
+       // We can't use studentsByPath directory removed/spliced index complexity, 
+       // easier to filter pool dynamically or check used set.
+       // Let's iterate repeatedly to find available candidates.
+       
+       let needed = reqCount;
+       for (let i = 0; i < pool.length && needed > 0; i++) {
+         if (pool[i].learning_path === path) {
+           teamMembers.push(pool[i]);
+           pool.splice(i, 1); // Remove from pool
+           i--; // Adjust index
+           needed--;
+         }
+       }
+    }
+
+    // B. Fill the rest with ANYONE from pool (Random) until TEAM_SIZE
+    while (teamMembers.length < TEAM_SIZE && pool.length > 0) {
+      // Pick random index
+      const randIdx = Math.floor(Math.random() * pool.length);
+      teamMembers.push(pool[randIdx]);
+      pool.splice(randIdx, 1);
+    }
+
+    // If we have members, create group
+    if (teamMembers.length > 0) {
+      createdGroupsCount++;
+      const groupName = `Auto Team ${createdGroupsCount} - ${new Date().getTime().toString().slice(-4)}`;
+      
+      // Pick Random Use Case
+      let randomUseCaseId = null;
+      if (useCases && useCases.length > 0) {
+        randomUseCaseId = useCases[Math.floor(Math.random() * useCases.length)].id;
+      }
+
+      // Create Group DB
+      const { data: group, error: gErr } = await supabase
+        .from("capstone_groups")
+        .insert({
+            group_name: groupName,
+            batch_id: batchId,
+            status: "draft",
+            created_at: new Date().toISOString(),
+            creator_user_ref: teamMembers[0].id, // First member as placeholder creator
+            use_case_ref: randomUseCaseId,
+            capstone_groups_source_id: generateGroupSourceId(), // Auto-generate CAPS ID
+        })
+        .select()
+        .single();
+      
+      if (gErr) throw { code: "DB_ERROR", message: "Gagal membuat grup otomatis." };
+
+      // Insert Members
+      for (const [idx, member] of teamMembers.entries()) {
+        const role = (idx === 0) ? "leader" : "member";
+        await supabase.from("capstone_group_member").insert({
+            group_ref: group.id,
+            user_ref: member.id,
+            role: role, 
+            state: "active",
+            joined_at: new Date().toISOString()
+        });
+        
+        assignments.push({ user: member.name, group: group.group_name, role, use_case: randomUseCaseId });
+      }
+    }
+  }
+
+  return {
+    assigned_count: assignments.length,
+    groups_created: createdGroupsCount,
+    details: assignments
+  };
+}
+
+/**
+ * Get users who do NOT have a team (Unassigned)
+ */
+async function getUnassignedStudentsService(batchId) {
+  // 1. Get All Students in Batch
+  const { data: allStudents, error: uErr } = await supabase
+    .from("users")
+    .select("id, name, email, users_source_id, learning_path")
+    .eq("batch_id", batchId)
+    .ilike("role", "student");
+
+  if (uErr) {
+    throw { code: "DB_ERROR", message: "Gagal mengambil data siswa." };
+  }
+
+  // 2. Get Active Members
+  const { data: activeMembers, error: mErr } = await supabase
+    .from("capstone_group_member")
+    .select("user_ref")
+    .eq("state", "active");
+
+  if (mErr) {
+    throw { code: "DB_ERROR", message: "Gagal mengecek keanggotaan." };
+  }
+
+  const activeUserIds = new Set(activeMembers.map(m => m.user_ref));
+
+  // 3. Filter
+  // Return students whose ID is NOT in the active set
+  const unassigned = allStudents.filter(s => !activeUserIds.has(s.id));
+
+  return unassigned;
+}
+
+/**
+ * Create a new timeline entry
+ */
+async function createTimelineService({ title, description, start_at, end_at, batch_id }) {
+  if (!batch_id) {
+    // Default or require? Let's require batch_id or default to 'asah-batch-1' if common
+    // But usually admin should specify. 
+  }
+  
+  const { data, error } = await supabase
+    .from("capstone_timeline")
+    .insert({
+      title,
+      description,
+      start_at,
+      end_at,
+      batch_id,
+      created_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Supabase INSERT Error (createTimeline):", error);
+    throw { code: "DB_INSERT_FAILED", message: "Gagal membuat timeline baru." };
+  }
+
+  return data;
+}
+
 module.exports = {
   createGroupService,
   updateGroupService,
@@ -278,4 +586,9 @@ module.exports = {
   validateGroupRegistrationService,
   updateStudentLearningPathService,
   listDeliverablesService,
+  addMemberToGroupService,
+  removeMemberFromGroupService,
+  autoAssignMembersService,
+  getUnassignedStudentsService,
+  createTimelineService,
 };

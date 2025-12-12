@@ -6,6 +6,11 @@ const {
   setGroupRulesService,
   validateGroupRegistrationService,
   updateStudentLearningPathService,
+  addMemberToGroupService,
+  removeMemberFromGroupService,
+  autoAssignMembersService,
+  getUnassignedStudentsService,
+  createTimelineService,
 } = require("../services/adminService");
 
 // Helper untuk format error response
@@ -192,4 +197,125 @@ module.exports = {
   setGroupRules,
   validateGroupRegistration,
   updateStudentLearningPath,
+  addMemberToGroup,
+  removeMemberFromGroup,
+  autoAssignMembers,
+  getUnassignedStudents,
+  createTimeline,
 };
+
+/**
+ * POST /api/admin/timeline
+ */
+async function createTimeline(req, res) {
+  const { title, description, start_at, end_at, batch_id } = req.body;
+
+  if (!title || !start_at || !end_at) {
+    return buildErrorResponse(res, 400, "Title, Start Date, dan End Date wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const data = await createTimelineService({ title, description, start_at, end_at, batch_id }); // Import logic handled by previous step implicitly? No I need to import it.
+    // Wait, I need to update the import at the top too!
+    // But I can't do multiple disjoint edits easily without multi_replace.
+    // I will use replace_file_content for this block first, then update import.
+    // Actually, let's use multi_replace to be safe and efficient.
+    return res.status(201).json({
+      message: "Timeline berhasil dibuat.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message || "Gagal membuat timeline.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}
+
+/**
+ * GET /api/admin/users/unassigned
+ */
+async function getUnassignedStudents(req, res) {
+  const { batch_id } = req.query; // Use query param for GET
+
+  if (!batch_id) {
+    return buildErrorResponse(res, 400, "Batch ID wajib diisi sebagai query param.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const data = await getUnassignedStudentsService(batch_id);
+    return res.status(200).json({
+      message: "Berhasil mengambil daftar siswa tanpa tim.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message || "Gagal mengambil data.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}
+
+/**
+ * POST /api/admin/groups/:groupId/members
+ */
+async function addMemberToGroup(req, res) {
+  const { groupId } = req.params;
+  const { user_id } = req.body;
+
+  if (!groupId || !user_id) {
+    return buildErrorResponse(res, 400, "Group ID dan User ID wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const data = await addMemberToGroupService(groupId, user_id);
+    return res.status(201).json({
+      message: "Anggota berhasil ditambahkan ke grup.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    const status = err.code === "ALREADY_IN_TEAM" ? 409 : 500;
+    return buildErrorResponse(res, status, err.message || "Gagal menambahkan anggota.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}
+
+/**
+ * DELETE /api/admin/groups/:groupId/members/:userId
+ */
+async function removeMemberFromGroup(req, res) {
+  const { groupId, userId } = req.params;
+
+  if (!groupId || !userId) {
+    return buildErrorResponse(res, 400, "Group ID dan User ID wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    await removeMemberFromGroupService(groupId, userId);
+    return res.status(200).json({
+      message: "Anggota berhasil dihapus dari grup.",
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message || "Gagal menghapus anggota.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}
+
+/**
+ * POST /api/admin/groups/auto-assign
+ */
+async function autoAssignMembers(req, res) {
+  const { batch_id } = req.body;
+
+  if (!batch_id) {
+    return buildErrorResponse(res, 400, "Batch ID wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const result = await autoAssignMembersService(batch_id);
+    return res.status(200).json({
+      message: "Proses randomisasi anggota berhasil.",
+      data: result,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    const status = err.code === "NO_STUDENTS" ? 404 : 500;
+    return buildErrorResponse(res, status, err.message || "Gagal melakukan auto-assign.", err.code || "INTERNAL_SERVER_ERROR");
+  }
+}

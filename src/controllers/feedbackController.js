@@ -9,7 +9,7 @@ const { buildErrorResponse } = require("../utils/respons");
  * POST /api/group/feedback
  */
 async function submitFeedback(req, res) {
-  const { reviewee_source_id, is_member_active, contribution_level, reason } = req.body;
+  const { reviewee_source_id, is_member_active, contribution_level, reason, group_ref, batch_id } = req.body;
 
   if (!reviewee_source_id || is_member_active === undefined || !contribution_level || !reason) {
     return buildErrorResponse(
@@ -26,6 +26,8 @@ async function submitFeedback(req, res) {
       is_member_active,
       contribution_level,
       reason,
+      group_ref, // Optional / Explicit
+      batch_id   // Optional / Explicit
     });
 
     return res.status(201).json({

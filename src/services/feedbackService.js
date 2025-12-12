@@ -81,19 +81,33 @@ async function submitFeedbackService(reviewerId, data) {
   } 
 
   // 4. Insert Feedback
+  // Use explicit values if provided (and validated?), otherwise derived
+  // For safety, we keep using derived values for critical logic, but we can verify consistency? 
+  // User asked "kalo responsenya seperti ini", implying they WANT to send it.
+  // Let's use the explicit ones if matched, or just rely on derived because it's safer.
+  // Actually, let's use the derived ones as primary to ensure data integrity, 
+  // BUT if the user passed explicit ones that mismatch, we could throw error?
+  // Or just ignore them. The user prompt implies they want to SEND it.
+  // If I just ignore them and store derived, the result in DB is the same (correct).
+  // But if the user sends WRONG group_id, and I store CORRECT one, that's fine.
+  // Let's stick to derived for safety (DB consistency), but allow them in payload without error.
+  
+  const finalGroupRef = reviewerGroup.group_ref; 
+  const finalBatchId = reviewee.batch_id;
+
   const { data: feedback, error } = await supabase
     .from("capstone_360_feedback")
     .insert({
       reviewer_user_ref: reviewerId,
       reviewee_user_ref: revieweeId,
-      group_ref: reviewerGroup.group_ref,
-      batch_id: reviewee.batch_id,
+      group_ref: finalGroupRef,
+      batch_id: finalBatchId,
       is_member_active,
       contribution_level,
       reason,
       created_at: new Date().toISOString(),
     })
-    .select()
+    .select("*, group:group_ref(group_name), reviewee:reviewee_user_ref(name)")
     .single();
 
   if (error) {
@@ -101,7 +115,12 @@ async function submitFeedbackService(reviewerId, data) {
     throw { code: "DB_INSERT_FAILED", message: "Gagal mengirim penilaian." };
   }
 
-  return feedback;
+  // Format response for frontend "beauty"
+  return {
+    ...feedback,
+    submitted_for: feedback.reviewee?.name,
+    group_name: feedback.group?.group_name
+  };
 }
 
 /**
