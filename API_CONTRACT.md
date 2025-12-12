@@ -409,6 +409,11 @@ Melihat detail grup beserta daftar anggotanya.
       "data": {
         "id": "uuid-group-1",
         "group_name": "Capstone Team A",
+        "use_case": {
+          "name": "Company Profile AI",
+          "capstone_use_case_source_id": "UC-001",
+          "company": "Dicoding"
+        },
         "members": [
           { "id": "...", "name": "Budi", "role": "leader" },
           { "id": "...", "name": "Siti", "role": "member" }
@@ -486,7 +491,7 @@ Mengacak siswa yang belum punya tim ke dalam grup baru.
             "user": "Budi",
             "group": "Auto Team 1 - 1234",
             "role": "leader",
-            "use_case": "uuid-use-case-1"
+            "use_case": "Company Profile AI (UC-001)"
           }
         ]
       }

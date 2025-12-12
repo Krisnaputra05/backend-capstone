@@ -393,7 +393,8 @@ async function autoAssignMembersService(batchId) {
   // 3. Get All Use Cases
   const { data: useCases } = await supabase
     .from("capstone_use_case")
-    .select("id, name");
+    .from("capstone_use_case")
+    .select("id, name, capstone_use_case_source_id");
 
   // Helper to shuffle array
   const shuffle = (array) => array.sort(() => 0.5 - Math.random());
@@ -501,7 +502,13 @@ async function autoAssignMembersService(batchId) {
             joined_at: new Date().toISOString()
         });
         
-        assignments.push({ user: member.name, group: group.group_name, role, use_case: randomUseCaseId });
+        const ucDetail = useCases.find(u => u.id === randomUseCaseId);
+        assignments.push({ 
+          user: member.name, 
+          group: group.group_name, 
+          role, 
+          use_case: ucDetail ? `${ucDetail.name} (${ucDetail.capstone_use_case_source_id})` : randomUseCaseId 
+        });
       }
     }
   }
@@ -591,6 +598,17 @@ async function getGroupByIdService(groupId) {
         state,
         joined_at,
         users:user_ref (name, email, learning_path, university, users_source_id)
+      members:capstone_group_member (
+        user_ref,
+        role,
+        state,
+        joined_at,
+        users:user_ref (name, email, learning_path, university, users_source_id)
+      ),
+      use_case:use_case_ref (
+        name,
+        capstone_use_case_source_id,
+        company
       )
     `)
     .eq("id", groupId)
