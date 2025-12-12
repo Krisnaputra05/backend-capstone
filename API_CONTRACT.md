@@ -360,7 +360,7 @@ Melihat aturan komposisi tim yang aktif.
 
 #### 3. Validate Group (Accept/Reject)
 Validasi pendaftaran tim mahasiswa. **Mengirim Email Notifikasi**.
--   **Endpoint:** `POST /groups/:groupId/validate`
+-   **Endpoint:** `PUT /groups/:groupId/validate`
 -   **Body:**
     ```json
     {

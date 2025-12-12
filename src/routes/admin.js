@@ -109,7 +109,7 @@ router.post(
 );
 
 // Validate Group Registration
-router.post(
+router.put(
   "/groups/:groupId/validate",
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
