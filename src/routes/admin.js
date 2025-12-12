@@ -6,6 +6,7 @@ const {
   updateGroup,
   updateProjectStatus,
   listAllGroups,
+  getGroupDetails,
   setGroupRules,
   validateGroupRegistration,
   updateStudentLearningPath,
@@ -38,6 +39,14 @@ router.put(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   updateGroup
+);
+
+// Get Group Details
+router.get(
+  "/groups/:groupId",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  getGroupDetails
 );
 
 // List All Groups

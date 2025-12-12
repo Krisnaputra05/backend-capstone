@@ -577,11 +577,51 @@ async function createTimelineService({ title, description, start_at, end_at, bat
   return data;
 }
 
+/**
+ * Get Group Details by ID (Admin)
+ */
+async function getGroupByIdService(groupId) {
+  const { data: group, error } = await supabase
+    .from("capstone_groups")
+    .select(`
+      *,
+      members:capstone_group_member (
+        user_ref,
+        role,
+        state,
+        joined_at,
+        users:user_ref (name, email, learning_path, university, users_source_id)
+      )
+    `)
+    .eq("id", groupId)
+    .single();
+
+  if (error || !group) {
+    throw { code: "GROUP_NOT_FOUND", message: "Data grup tidak ditemukan." };
+  }
+
+  // Format response
+  return {
+    ...group,
+    members: group.members.map(m => ({
+      id: m.user_ref,
+      source_id: m.users?.users_source_id,
+      name: m.users?.name,
+      email: m.users?.email,
+      role: m.role,
+      status: m.state,
+      learning_path: m.users?.learning_path,
+      joined_at: m.joined_at
+    }))
+  };
+}
+
 module.exports = {
   createGroupService,
   updateGroupService,
   updateProjectStatusService,
   listAllGroupsService,
+  getGroupByIdService,
   setGroupRulesService,
   validateGroupRegistrationService,
   updateStudentLearningPathService,

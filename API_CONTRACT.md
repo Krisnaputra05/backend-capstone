@@ -358,7 +358,25 @@ Melihat aturan komposisi tim yang aktif.
 -   **Endpoint:** `POST /groups`
 -   **Body:** `{ "group_name": "Tim A", "batch_id": "batch-1" }`
 
-#### 3. Validate Group (Accept/Reject)
+#### 3. Get Group Details
+Melihat detail grup beserta daftar anggotanya.
+-   **Endpoint:** `GET /groups/:groupId`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil detail grup.",
+      "data": {
+        "id": "uuid-group-1",
+        "group_name": "Capstone Team A",
+        "members": [
+          { "id": "...", "name": "Budi", "role": "leader" },
+          { "id": "...", "name": "Siti", "role": "member" }
+        ]
+      }
+    }
+    ```
+
+#### 4. Validate Group (Accept/Reject)
 Validasi pendaftaran tim mahasiswa. **Mengirim Email Notifikasi**.
 -   **Endpoint:** `PUT /groups/:groupId/validate`
 -   **Body:**

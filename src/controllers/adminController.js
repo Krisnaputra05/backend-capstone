@@ -11,6 +11,7 @@ const {
   autoAssignMembersService,
   getUnassignedStudentsService,
   createTimelineService,
+  getGroupByIdService,
 } = require("../services/adminService");
 
 // Helper untuk format error response
@@ -129,6 +130,24 @@ async function updateGroup(req, res) {
 }
 
 /**
+ * GET /api/admin/groups/:groupId
+ */
+async function getGroupDetails(req, res) {
+  const { groupId } = req.params;
+
+  try {
+    const data = await getGroupByIdService(groupId);
+    return res.status(200).json({
+      message: "Berhasil mengambil detail grup.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message, err.code);
+  }
+}
+
+/**
  * GET /api/admin/groups
  */
 async function listAllGroups(req, res) {
@@ -201,7 +220,9 @@ module.exports = {
   removeMemberFromGroup,
   autoAssignMembers,
   getUnassignedStudents,
+  getUnassignedStudents,
   createTimeline,
+  getGroupDetails,
 };
 
 /**
