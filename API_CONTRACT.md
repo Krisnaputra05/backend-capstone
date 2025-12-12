@@ -271,6 +271,22 @@ Melihat aturan komposisi tim yang aktif.
 ### b. List Deliverables (Admin)
 -   **Endpoint:** `GET /api/admin/deliverables`
 -   **Query Params:** `document_type=PROJECT_PLAN`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil daftar dokumen.",
+      "data": [
+        {
+          "id": "uuid-deliv-1",
+          "document_type": "PROJECT_PLAN",
+          "file_path": "https://...",
+          "group_name": "Capstone Team A", // Nama Grup
+          "submitted_at": "2023-10-05T10:00:00Z", // Jam Dikirim
+          "status": "pending"
+        }
+      ]
+    }
+    ```
 
 ---
 
@@ -336,11 +352,36 @@ Melihat aturan komposisi tim yang aktif.
     }
     ```
 
-### b. Get Feedback Status (Student)
+### b. List Feedback History & Status (Student)
 -   **Endpoint:** `GET /api/group/feedback/status`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil status penilaian.",
+      "data": [
+        {
+          "id": "uuid-member-1",
+          "name": "Budi",
+          "status": "completed",
+          "feedback": {
+             "contribution_level": "signifikan",
+             "reason": "Sangat membantu...",
+             "submitted_at": "2023-11-20T10:00:00Z"
+          }
+        },
+        {
+          "id": "uuid-member-2",
+          "name": "Siti",
+          "status": "pending",
+          "feedback": null
+        }
+      ]
+    }
+    ```
 
-### c. Export Feedback Data (Admin)
+### c. List All Feedback Data (Admin)
 -   **Endpoint:** `GET /api/admin/feedback/export`
+-   **Query Params:** `batch_id=...` & `group_id=...` (Optional filters)
 
 ---
 

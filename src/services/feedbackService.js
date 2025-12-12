@@ -142,26 +142,42 @@ async function getFeedbackStatusService(userId) {
     .eq("group_ref", myGroup.group_ref)
     .neq("user_ref", userId); // Exclude self
 
-  // Get completed reviews
+  // Get completed reviews with details
   const { data: completedReviews } = await supabase
     .from("capstone_360_feedback")
-    .select("reviewee_user_ref")
+    .select("reviewee_user_ref, contribution_level, reason, is_member_active, created_at")
     .eq("reviewer_user_ref", userId);
 
-  const completedIds = new Set(completedReviews?.map(r => r.reviewee_user_ref));
+  const reviewsMap = {};
+  if (completedReviews) {
+    completedReviews.forEach(r => {
+      reviewsMap[r.reviewee_user_ref] = r;
+    });
+  }
 
-  return teamMembers.map(m => ({
-    name: m.users?.name || "Unknown Member",
-    source_id: m.users?.users_source_id || m.user_id, // Fallback ke user_id dari tabel member
-    status: completedIds.has(m.user_ref) ? "completed" : "pending"
-  }));
+  return teamMembers.map(m => {
+    const review = reviewsMap[m.user_ref];
+    return {
+      id: m.user_ref, // User ID (UUID)
+      source_id: m.users?.users_source_id || m.user_id,
+      name: m.users?.name || "Unknown Member",
+      status: review ? "completed" : "pending",
+      // Include feedback details if completed
+      feedback: review ? {
+        contribution_level: review.contribution_level,
+        reason: review.reason,
+        is_member_active: review.is_member_active,
+        submitted_at: review.created_at
+      } : null
+    };
+  });
 }
 
 /**
- * Admin: Get Feedback Data (Export)
+ * Admin: Get Feedback List (with filters)
  */
-async function getFeedbackExportService() {
-  const { data, error } = await supabase
+async function getFeedbackExportService({ batch_id, group_id } = {}) {
+  let query = supabase
     .from("capstone_360_feedback")
     .select(`
       id,
@@ -175,6 +191,16 @@ async function getFeedbackExportService() {
       group:group_ref(group_name)
     `)
     .order("created_at", { ascending: false });
+
+  if (batch_id) {
+    query = query.eq("batch_id", batch_id);
+  }
+  
+  if (group_id) {
+    query = query.eq("group_ref", group_id);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw { code: "DB_SELECT_FAILED", message: "Gagal mengambil data feedback." };

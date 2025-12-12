@@ -73,8 +73,10 @@ async function getFeedbackStatus(req, res) {
  * GET /api/admin/feedback/export
  */
 async function adminGetFeedbackExport(req, res) {
+  const { batch_id, group_id } = req.query; // Get filters from query
+
   try {
-    const data = await getFeedbackExportService();
+    const data = await getFeedbackExportService({ batch_id, group_id });
     return res.status(200).json({
       message: "Berhasil mengambil data export feedback.",
       data,
