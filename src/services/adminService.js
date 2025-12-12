@@ -598,14 +598,8 @@ async function getGroupByIdService(groupId) {
         state,
         joined_at,
         users:user_ref (name, email, learning_path, university, users_source_id)
-      members:capstone_group_member (
-        user_ref,
-        role,
-        state,
-        joined_at,
-        users:user_ref (name, email, learning_path, university, users_source_id)
       ),
-      use_case:use_case_ref (
+      use_case:capstone_use_case (
         name,
         capstone_use_case_source_id,
         company
