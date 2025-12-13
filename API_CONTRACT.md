@@ -305,18 +305,50 @@ Melihat aturan komposisi tim yang aktif.
       "proof_url": "https://github.com/..."
     }
     ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Worksheet berhasil dikumpulkan.",
+      "data": {
+        "id": "uuid-worksheet-1",
+        "status": "submitted", // or "submitted_late" if submitted_at > period_end
+        "submitted_at": "2023-10-14T23:59:00Z"
+      }
+    }
+    ```
 
 ### b. List My Worksheets (Student)
 -   **Endpoint:** `GET /api/group/worksheets`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil riwayat worksheet.",
+      "data": [
+        {
+          "id": "uuid-ws-1",
+          "period_start": "2023-10-01",
+          "period_end": "2023-10-14",
+          "status": "completed", // submitted, submitted_late, completed, completed_late, missed
+          "activity_description": "...",
+          "feedback": "Great work"
+        }
+      ]
+    }
+    ```
 
 ### c. List All Worksheets (Admin)
 -   **Endpoint:** `GET /api/admin/worksheets`
+-   **Query Params:** `batch_id=...`, `status=...` (submitted, completed, missed)
 
 ### d. Validate Worksheet (Admin)
 -   **Endpoint:** `PUT /api/admin/worksheets/:id/validate`
 -   **Body:**
+    - `status`:
+        - `completed`: Selesai (Tepat Waktu)
+        - `completed_late`: Selesai (Terlambat)
+        - `missed`: Tidak Selesai / Absen
     ```json
-    { "status": "approved", "feedback": "Good job." }
+    { "status": "completed", "feedback": "Good job." }
     ```
 
 ---

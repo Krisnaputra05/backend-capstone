@@ -22,7 +22,21 @@ async function submitWorksheetService(userId, data) {
     throw { code: "NO_TEAM", message: "User does not belong to a team." };
   }
 
-  // 2. Insert Worksheet
+  // 2. Logic Status: Check Late Submission
+  const submittedAt = new Date();
+  const periodEnd = new Date(data.period_end);
+  
+  // Set end of day for periodEnd (23:59:59) to be fair, or strictly follow timestamp if provided.
+  // Assuming period_end is YYYY-MM-DD, parsing it usually gives start of day (00:00).
+  // Let's set it to end of that day.
+  periodEnd.setHours(23, 59, 59, 999);
+
+  let initialStatus = "submitted";
+  if (submittedAt > periodEnd) {
+    initialStatus = "submitted_late";
+  }
+
+  // 3. Insert Worksheet
   const { data: worksheet, error } = await supabase
     .from("capstone_worksheets")
     .insert({
@@ -33,8 +47,8 @@ async function submitWorksheetService(userId, data) {
       proof_url: data.proof_url,
       period_start: data.period_start,
       period_end: data.period_end,
-      status: "submitted",
-      submitted_at: new Date().toISOString(),
+      status: initialStatus,
+      submitted_at: submittedAt.toISOString(),
     })
     .select()
     .single();
@@ -89,8 +103,12 @@ async function getAllWorksheetsService({ batch_id, status, user_id }) {
  * Admin: Validate worksheet
  */
 async function validateWorksheetService(worksheetId, { status, feedback }) {
-  if (!["approved", "rejected", "late"].includes(status)) {
-    throw { code: "INVALID_STATUS", message: "Invalid status value." };
+  // Valid status: 'completed' (Selesai), 'completed_late' (Selesai Terlambat), 'missed' (Tidak Selesai)
+  // Also keeping 'submitted' or 'submitted_late' if reverting is needed, but for validation mainly these 3.
+  const validStatuses = ["completed", "completed_late", "missed"];
+  
+  if (!validStatuses.includes(status)) {
+    throw { code: "INVALID_STATUS", message: "Invalid status value. Use: completed, completed_late, or missed." };
   }
 
   const { data, error } = await supabase
