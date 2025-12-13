@@ -331,12 +331,22 @@ async function addMemberToGroupService(groupId, userId) {
     throw { code: "ALREADY_IN_TEAM", message: "User sudah tergabung dalam tim lain." };
   }
 
+  // 1b. Get User Source ID
+  const { data: user } = await supabase
+    .from("users")
+    .select("users_source_id")
+    .eq("id", userId)
+    .single();
+
+  if (!user) throw { code: "USER_NOT_FOUND", message: "User tidak ditemukan." };
+
   // 2. Add to group
   const { data, error } = await supabase
     .from("capstone_group_member")
     .insert({
       group_ref: groupId,
       user_ref: userId,
+      user_id: user.users_source_id, // Populate Source ID column
       role: "member",
       state: "active",
       joined_at: new Date().toISOString(),
