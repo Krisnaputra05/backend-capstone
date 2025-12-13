@@ -22,7 +22,7 @@ const {
   validateWorksheet,
 } = require("../controllers/worksheetController");
 const { adminGetFeedbackExport } = require("../controllers/feedbackController");
-const { createPeriod } = require("../controllers/periodController");
+const { createPeriod, sendReminder } = require("../controllers/periodController");
 
 // --- Rute Grup ---
 
@@ -172,6 +172,14 @@ router.post(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   createPeriod
+);
+
+// Send Period Reminder
+router.post(
+  "/periods/:id/remind",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  sendReminder
 );
 
 module.exports = router;

@@ -87,8 +87,27 @@ async function sendTeamValidationEmail(emails, groupName, status, reason) {
   }
 }
 
+/**
+ * Send Worksheet Reminder Email
+ */
+async function sendWorksheetReminderEmail(emails, periodTitle, endDate) {
+  const subject = `Pengingat: Batas Waktu Worksheet ${periodTitle}`;
+  const html = `
+    <h3>Halo!</h3>
+    <p>Ini adalah pengingat untuk segera mengisi <b>${periodTitle}</b>.</p>
+    <p>Batas waktu pengumpulan adalah: <b>${endDate}</b></p>
+    <p>Mohon segera selesaikan sebelum tenggat waktu.</p>
+    <p>Terima kasih.</p>
+  `;
+
+  for (const email of emails) {
+    await sendEmail(email, subject, html);
+  }
+}
+
 module.exports = {
   sendEmail,
   sendTeamRegistrationEmail,
   sendTeamValidationEmail,
+  sendWorksheetReminderEmail,
 };

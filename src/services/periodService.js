@@ -67,4 +67,56 @@ module.exports = {
   createPeriodService,
   listPeriodsService,
   getPeriodByIdService,
+  sendPeriodReminderService,
 };
+
+const { sendWorksheetReminderEmail } = require("./emailService");
+
+/**
+ * Send reminder to students who haven't submitted for a period
+ */
+async function sendPeriodReminderService(periodId) {
+  // 1. Get Period Details
+  const period = await getPeriodByIdService(periodId);
+
+  // 2. Get all students in the batch
+  const { data: students, error: studentErr } = await supabase
+    .from("users")
+    .select("id, email, name")
+    .eq("batch_id", period.batch_id)
+    .eq("role", "student"); // Assuming role is 'student'
+
+  if (studentErr) {
+    throw { code: "DB_ERROR", message: "Gagal mengambil data siswa." };
+  }
+
+  // 3. Get students who HAVE submitted for this period
+  // We check period_id directly (if updated) OR fallback to date range overlap if needed.
+  // Since we updated logic to use period_start/end, checking overlap or specific period field if added.
+  // Let's assume we check by period dates match for now as per previous service logic.
+  const { data: submissions, error: subErr } = await supabase
+    .from("capstone_worksheets")
+    .select("user_ref")
+    .eq("period_start", period.start_date)
+    .eq("period_end", period.end_date);
+  
+  if (subErr) {
+    throw { code: "DB_ERROR", message: "Gagal mengambil data submission." };
+  }
+
+  const submittedUserIds = new Set(submissions.map(s => s.user_ref));
+
+  // 4. Filter Non-Submitters
+  const missingStudents = students.filter(s => !submittedUserIds.has(s.id));
+  const missingEmails = missingStudents.map(s => s.email).filter(e => e); // ensure not null
+
+  // 5. Send Emails
+  if (missingEmails.length > 0) {
+    await sendWorksheetReminderEmail(missingEmails, period.title, period.end_date);
+  }
+
+  return {
+    period_title: period.title,
+    reminded_count: missingEmails.length,
+  };
+}

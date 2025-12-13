@@ -331,6 +331,20 @@ Melihat aturan komposisi tim yang aktif.
     }
     ```
 
+### c. Send Reminder (Admin)
+Memicu pengiriman email pengingat kepada mahasiswa yang BELUM mengumpulkan worksheet pada periode ini.
+-   **Endpoint:** `POST /api/admin/periods/:id/remind`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Pengingat berhasil dikirim.",
+      "data": {
+        "period_title": "Check-in 1",
+        "reminded_count": 15
+      }
+    }
+    ```
+
 ---
 
 ## 5B. 📅 Capstone Worksheet (Student Submission)

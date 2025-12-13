@@ -52,4 +52,23 @@ async function listPeriods(req, res) {
 module.exports = {
   createPeriod,
   listPeriods,
+  sendReminder,
 };
+
+/**
+ * POST /api/admin/periods/:id/remind
+ */
+async function sendReminder(req, res) {
+  const { id } = req.params;
+
+  try {
+    const data = await require("../services/periodService").sendPeriodReminderService(id);
+    return res.status(200).json({
+      message: "Pengingat berhasil dikirim.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message, err.code);
+  }
+}
