@@ -481,9 +481,29 @@ Memicu pengiriman email pengingat kepada mahasiswa yang BELUM mengumpulkan works
 
 #### 1. List All Groups
 -   **Endpoint:** `GET /groups`
--   **Response (200 OK):** `{ "data": [ ...groups ] }`
+-   **Response (200 OK):** JSON List of groups.
 
-#### 2. Create Group (Manual)
+#### 2. Export Groups (CSV Data)
+Mengambil data seluruh grup beserta anggota dalam format JSON flat (cocok untuk dikonversi ke CSV di frontend).
+-   **Endpoint:** `GET /groups/export`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil export data grup.",
+      "data": [
+        {
+          "Group_ID": "CAPS-1234",
+          "Group_Name": "Tim A",
+          "Member_Name": "Budi",
+          "Role": "leader",
+          "Learning_Path": "Machine Learning (ML)",
+          ...
+        }
+      ]
+    }
+    ```
+
+#### 3. Create Group (Manual)
 -   **Endpoint:** `POST /groups`
 -   **Body:** `{ "group_name": "Tim A", "batch_id": "batch-1" }`
 

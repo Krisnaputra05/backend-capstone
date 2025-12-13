@@ -340,3 +340,37 @@ async function autoAssignMembers(req, res) {
     return buildErrorResponse(res, status, err.message || "Gagal melakukan auto-assign.", err.code || "INTERNAL_SERVER_ERROR");
   }
 }
+
+/**
+ * GET /api/admin/groups/export
+ */
+async function exportGroups(req, res) {
+  try {
+    const data = await require("../services/adminService").adminExportGroupsService();
+    // Return JSON, frontend can convert to CSV
+    return res.status(200).json({
+      message: "Berhasil export data grup.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message, err.code);
+  }
+}
+
+module.exports = {
+  createGroup,
+  updateProjectStatus,
+  updateGroup,
+  listAllGroups,
+  setGroupRules,
+  validateGroupRegistration,
+  updateStudentLearningPath,
+  addMemberToGroup,
+  removeMemberFromGroup,
+  autoAssignMembers,
+  getUnassignedStudents,
+  createTimeline,
+  getGroupDetails,
+  exportGroups,
+};

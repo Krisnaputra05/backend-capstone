@@ -15,6 +15,7 @@ const {
   autoAssignMembers,
   getUnassignedStudents,
   createTimeline,
+  exportGroups,
 } = require("../controllers/adminController");
 const { listDeliverables } = require("../controllers/adminDeliverableController");
 const {
@@ -156,6 +157,14 @@ router.get(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   adminGetFeedbackExport
+);
+
+// Export Groups
+router.get(
+  "/groups/export",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  exportGroups
 );
 
 // Create Timeline (NEW)

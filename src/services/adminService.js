@@ -643,4 +643,71 @@ module.exports = {
   autoAssignMembersService,
   getUnassignedStudentsService,
   createTimelineService,
+  adminExportGroupsService,
 };
+
+/**
+ * Export Groups to CSV-friendly JSON
+ */
+async function adminExportGroupsService() {
+  const { data: groups, error } = await supabase
+    .from("capstone_groups")
+    .select(`
+      id,
+      group_name,
+      status,
+      batch_id,
+      created_at,
+      capstone_groups_source_id,
+      members:capstone_group_member (
+        role,
+        users:user_ref (name, email, learning_path, university)
+      ),
+      use_case:capstone_use_case (name, company)
+    `)
+    .eq("members.state", "active") // Only active members
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw { code: "DB_SELECT_FAILED", message: "Gagal mengambil data untuk export." };
+  }
+
+  // Format Flat for CSV
+  const exportData = [];
+  
+  groups.forEach(group => {
+    // If group has no members, just push group info
+    if (!group.members || group.members.length === 0) {
+      exportData.push({
+        Group_ID: group.capstone_groups_source_id || group.id,
+        Batch_ID: group.batch_id,
+        Group_Name: group.group_name,
+        Status: group.status,
+        Use_Case: group.use_case?.name || "-",
+        Company: group.use_case?.company || "-",
+        Member_Name: "-",
+        Member_Email: "-",
+        Role: "-",
+        Learning_Path: "-"
+      });
+    } else {
+      group.members.forEach(m => {
+        if (!m.users) return; // Skip if user data missing
+        exportData.push({
+          Group_ID: group.capstone_groups_source_id || group.id,
+          Batch_ID: group.batch_id,
+          Group_Name: group.group_name,
+          Status: group.status,
+          Use_Case: group.use_case?.name || "-",
+          Company: group.use_case?.company || "-",
+          Member_Name: m.users.name,
+          Member_Email: m.users.email,
+          Role: m.role,
+          Learning_Path: m.users.learning_path || "-"
+        });
+      });
+    }
+  });
+
+  return exportData;
+}
