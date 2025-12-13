@@ -16,6 +16,8 @@ const {
   getUnassignedStudents,
   createTimeline,
   exportGroups,
+  updateTimeline,
+  deleteTimeline,
 } = require("../controllers/adminController");
 const { listDeliverables } = require("../controllers/adminDeliverableController");
 const {
@@ -173,6 +175,22 @@ router.post(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   createTimeline
+);
+
+// Update Timeline
+router.put(
+  "/timeline/:id",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  updateTimeline
+);
+
+// Delete Timeline
+router.delete(
+  "/timeline/:id",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  deleteTimeline
 );
 
 // Create Check-in Period

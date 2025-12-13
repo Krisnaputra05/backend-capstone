@@ -621,6 +621,33 @@ Membuat jadwal/timeline baru untuk proyek.
 -   **Body:**
     ```json
     {
+      "title": "Registrasi Batch 1",
+      "description": "...",
+      "start_at": "2023-10-01",
+      "end_at": "2023-10-07",
+      "batch_id": "asah-batch-1"
+    }
+    ```
+
+#### 2. Update Timeline
+Mengubah data timeline yang sudah ada.
+-   **Endpoint:** `PUT /timeline/:id`
+-   **Body:** (Partial update allowed)
+    ```json
+    {
+      "title": "Perpanjangan Registrasi",
+      "end_at": "2023-10-10"
+    }
+    ```
+-   **Response (200 OK):** `{ "message": "Timeline berhasil diperbarui.", "data": { ... } }`
+
+#### 3. Delete Timeline
+Menghapus timeline.
+-   **Endpoint:** `DELETE /timeline/:id`
+-   **Response (200 OK):** `{ "message": "Timeline berhasil dihapus." }`
+-   **Body:**
+    ```json
+    {
       "title": "Pendaftaran",
       "description": "Periode pendaftaran untuk mahasiswa batch 1.",
       "start_at": "2023-10-01",

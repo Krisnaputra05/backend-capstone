@@ -628,24 +628,6 @@ async function getGroupByIdService(groupId) {
   };
 }
 
-module.exports = {
-  createGroupService,
-  updateGroupService,
-  updateProjectStatusService,
-  listAllGroupsService,
-  getGroupByIdService,
-  setGroupRulesService,
-  validateGroupRegistrationService,
-  updateStudentLearningPathService,
-  listDeliverablesService,
-  addMemberToGroupService,
-  removeMemberFromGroupService,
-  autoAssignMembersService,
-  getUnassignedStudentsService,
-  createTimelineService,
-  adminExportGroupsService,
-};
-
 /**
  * Export Groups to CSV-friendly JSON
  */
@@ -711,3 +693,63 @@ async function adminExportGroupsService() {
 
   return exportData;
 }
+
+/**
+ * Update Timeline
+ */
+async function updateTimelineService(id, updates) {
+  const { title, description, start_at, end_at } = updates;
+  const payload = { updated_at: new Date().toISOString() };
+
+  if (title !== undefined) payload.title = title;
+  if (description !== undefined) payload.description = description;
+  if (start_at !== undefined) payload.start_at = start_at;
+  if (end_at !== undefined) payload.end_at = end_at;
+
+  const { data, error } = await supabase
+    .from("capstone_timeline")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal memperbarui timeline." };
+  }
+
+  return data;
+}
+
+/**
+ * Delete Timeline
+ */
+async function deleteTimelineService(id) {
+  const { error } = await supabase
+    .from("capstone_timeline")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw { code: "DB_DELETE_FAILED", message: "Gagal menghapus timeline." };
+  }
+}
+
+module.exports = {
+  createGroupService,
+  updateGroupService,
+  updateProjectStatusService,
+  listAllGroupsService,
+  getGroupByIdService,
+  setGroupRulesService,
+  validateGroupRegistrationService,
+  updateStudentLearningPathService,
+  listDeliverablesService,
+  addMemberToGroupService,
+  removeMemberFromGroupService,
+  autoAssignMembersService,
+  getUnassignedStudentsService,
+  createTimelineService,
+  adminExportGroupsService,
+  updateTimelineService,
+  deleteTimelineService,
+};

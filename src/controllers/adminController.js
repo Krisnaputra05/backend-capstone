@@ -11,6 +11,8 @@ const {
   autoAssignMembersService,
   getUnassignedStudentsService,
   createTimelineService,
+  updateTimelineService,
+  deleteTimelineService,
   getGroupByIdService,
 } = require("../services/adminService");
 
@@ -373,4 +375,50 @@ module.exports = {
   createTimeline,
   getGroupDetails,
   exportGroups,
+  updateTimeline,
+  deleteTimeline,
 };
+
+/**
+ * PUT /api/admin/timeline/:id
+ */
+async function updateTimeline(req, res) {
+  const { id } = req.params;
+  const { title, description, start_at, end_at } = req.body;
+
+  if (!id) {
+    return buildErrorResponse(res, 400, "ID Timeline wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    const data = await updateTimelineService(id, { title, description, start_at, end_at });
+    return res.status(200).json({
+      message: "Timeline berhasil diperbarui.",
+      data,
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message, err.code);
+  }
+}
+
+/**
+ * DELETE /api/admin/timeline/:id
+ */
+async function deleteTimeline(req, res) {
+  const { id } = req.params;
+
+  if (!id) {
+    return buildErrorResponse(res, 400, "ID Timeline wajib diisi.", "VALIDATION_FAILED");
+  }
+
+  try {
+    await deleteTimelineService(id);
+    return res.status(200).json({
+      message: "Timeline berhasil dihapus.",
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    return buildErrorResponse(res, 500, err.message, err.code);
+  }
+}
