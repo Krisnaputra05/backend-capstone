@@ -84,11 +84,15 @@ async function sendPeriodReminderService(periodId) {
     .from("users")
     .select("id, email, name")
     .eq("batch_id", period.batch_id)
-    .eq("role", "student"); // Assuming role is 'student'
+    .eq("batch_id", period.batch_id)
+    .ilike("role", "student"); // Case-insensitive check
 
   if (studentErr) {
+    console.error("Error fetching students:", studentErr);
     throw { code: "DB_ERROR", message: "Gagal mengambil data siswa." };
   }
+  
+  console.log(`[ReminderDebug] Found ${students.length} students in batch ${period.batch_id}`);
 
   // 3. Get students who HAVE submitted for this period
   // We check period_id directly (if updated) OR fallback to date range overlap if needed.
@@ -101,14 +105,19 @@ async function sendPeriodReminderService(periodId) {
     .eq("period_end", period.end_date);
   
   if (subErr) {
+    console.error("Error fetching submissions:", subErr);
     throw { code: "DB_ERROR", message: "Gagal mengambil data submission." };
   }
+  
+  console.log(`[ReminderDebug] Found ${submissions.length} matching submissions.`);
 
   const submittedUserIds = new Set(submissions.map(s => s.user_ref));
 
   // 4. Filter Non-Submitters
   const missingStudents = students.filter(s => !submittedUserIds.has(s.id));
   const missingEmails = missingStudents.map(s => s.email).filter(e => e); // ensure not null
+  
+  console.log(`[ReminderDebug] Missing students count: ${missingStudents.length}`);
 
   // 5. Send Emails
   if (missingEmails.length > 0) {
