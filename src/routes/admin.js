@@ -22,6 +22,7 @@ const {
   validateWorksheet,
 } = require("../controllers/worksheetController");
 const { adminGetFeedbackExport } = require("../controllers/feedbackController");
+const { createPeriod } = require("../controllers/periodController");
 
 // --- Rute Grup ---
 
@@ -163,6 +164,14 @@ router.post(
   authenticateCustomJWT,
   authorizeRoles(["ADMIN"]),
   createTimeline
+);
+
+// Create Check-in Period
+router.post(
+  "/periods",
+  authenticateCustomJWT,
+  authorizeRoles(["ADMIN"]),
+  createPeriod
 );
 
 module.exports = router;

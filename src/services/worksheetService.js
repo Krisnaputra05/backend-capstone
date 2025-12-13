@@ -1,9 +1,11 @@
 const { supabase } = require("../config/supabaseClient");
 
+const { getPeriodByIdService } = require("./periodService");
+
 /**
  * Submit a new worksheet (Check-in)
  * @param {string} userId - ID of the student
- * @param {object} data - { activity_description, proof_url, period_start, period_end }
+ * @param {object} data - { activity_description, proof_url, period_id }
  */
 async function submitWorksheetService(userId, data) {
   // 1. Get User's Group & Batch Info
@@ -22,13 +24,18 @@ async function submitWorksheetService(userId, data) {
     throw { code: "NO_TEAM", message: "User does not belong to a team." };
   }
 
-  // 2. Logic Status: Check Late Submission
+  // 2. Validate Period & Get Dates
+  if (!data.period_id) {
+    throw { code: "VALIDATION_FAILED", message: "Period ID wajib diisi." };
+  }
+
+  const period = await getPeriodByIdService(data.period_id);
+
+  // 2b. Logic Status: Check Late Submission
   const submittedAt = new Date();
-  const periodEnd = new Date(data.period_end);
+  const periodEnd = new Date(period.end_date);
   
-  // Set end of day for periodEnd (23:59:59) to be fair, or strictly follow timestamp if provided.
-  // Assuming period_end is YYYY-MM-DD, parsing it usually gives start of day (00:00).
-  // Let's set it to end of that day.
+  // Set end of day for periodEnd (23:59:59)
   periodEnd.setHours(23, 59, 59, 999);
 
   let initialStatus = "submitted";
@@ -37,6 +44,9 @@ async function submitWorksheetService(userId, data) {
   }
 
   // 3. Insert Worksheet
+  // Note: We're storing period_id if your table has it, OR just start/end dates.
+  // Assuming the user's legacy table supports start/end, we'll map them from the period.
+  // Ideally, you should ADD check_in_period_ref to capstone_worksheets, but for now we follow the existing fields.
   const { data: worksheet, error } = await supabase
     .from("capstone_worksheets")
     .insert({
@@ -45,8 +55,8 @@ async function submitWorksheetService(userId, data) {
       batch_id: user.batch_id,
       activity_description: data.activity_description,
       proof_url: data.proof_url,
-      period_start: data.period_start,
-      period_end: data.period_end,
+      period_start: period.start_date, // Auto-filled from Period
+      period_end: period.end_date,     // Auto-filled from Period
       status: initialStatus,
       submitted_at: submittedAt.toISOString(),
     })

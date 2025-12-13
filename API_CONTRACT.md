@@ -290,7 +290,50 @@ Melihat aturan komposisi tim yang aktif.
 
 ---
 
-## 5. 📅 Capstone Worksheet (Check-in) Features
+## 5A. 📅 Check-in Periods (Admin Managed)
+
+**Base URL:** `/api/admin/periods` (Admin) / `/api/periods` (Public/Student)
+
+### a. Create Period (Admin)
+-   **Endpoint:** `POST /api/admin/periods`
+-   **Body:**
+    ```json
+    {
+      "batch_id": "asah-batch-1",
+      "title": "Check-in 1 (Minggu 1-2)",
+      "start_date": "2023-10-01",
+      "end_date": "2023-10-14"
+    }
+    ```
+-   **Response (201 Created):**
+    ```json
+    {
+      "message": "Periode check-in berhasil dibuat.",
+      "data": { "id": "uuid-period-1", "title": "Check-in 1", ... }
+    }
+    ```
+
+### b. List Active Periods
+-   **Endpoint:** `GET /api/periods?batch_id=asah-batch-1`
+-   **Response (200 OK):**
+    ```json
+    {
+      "message": "Berhasil mengambil daftar periode.",
+      "data": [
+        {
+          "id": "uuid-period-1",
+          "title": "Check-in 1",
+          "start_date": "2023-10-01",
+          "end_date": "2023-10-14",
+          "is_active": true
+        }
+      ]
+    }
+    ```
+
+---
+
+## 5B. 📅 Capstone Worksheet (Student Submission)
 
 **Base URL:** `/api/group` (Student) / `/api/admin` (Admin)
 
@@ -299,8 +342,7 @@ Melihat aturan komposisi tim yang aktif.
 -   **Body:**
     ```json
     {
-      "period_start": "2023-10-01",
-      "period_end": "2023-10-14",
+      "period_id": "uuid-period-1",
       "activity_description": "Membuat API...",
       "proof_url": "https://github.com/..."
     }
