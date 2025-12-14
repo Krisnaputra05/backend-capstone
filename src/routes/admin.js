@@ -11,7 +11,7 @@ const {
   validateGroupRegistration,
   updateStudentLearningPath,
   addMemberToGroup,
-  updateMemberStatus,
+  removeMemberFromGroup,
   autoAssignMembers,
   getUnassignedStudents,
   createTimeline,
@@ -85,12 +85,12 @@ router.post(
     addMemberToGroup
 );
   
-// Update Member Status (Active/Inactive)
-router.put(
+// Remove Member from Group
+router.delete(
     "/groups/:groupId/members/:userId",
     authenticateCustomJWT,
     authorizeRoles(["ADMIN"]),
-    require("../controllers/adminController").updateMemberStatus
+    removeMemberFromGroup
 );
 
 // Auto Assign (Randomize)

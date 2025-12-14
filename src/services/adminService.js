@@ -361,29 +361,21 @@ async function addMemberToGroupService(groupId, userId) {
 }
 
 /**
- * Update member status in a group (Admin Manual)
- * Handles Soft Delete (inactive) or Reactivation (active)
+ * Remove a member from a group (Admin Manual)
+ * Implements SOFT DELETE (updates state to inactive)
  */
-async function updateMemberStatusService(groupId, userId, status) {
-  const updatePayload = {
-    state: status,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (status === "inactive") {
-    updatePayload.left_at = new Date().toISOString();
-  } else if (status === "active") {
-    updatePayload.left_at = null; // Reset left_at if reactivating
-  }
-
+async function removeMemberFromGroupService(groupId, userId) {
   const { error } = await supabase
     .from("capstone_group_member")
-    .update(updatePayload)
+    .update({ 
+      state: "inactive", 
+      left_at: new Date().toISOString() 
+    })
     .eq("group_ref", groupId)
     .eq("user_ref", userId);
 
   if (error) {
-    throw { code: "DB_UPDATE_FAILED", message: "Gagal memperbarui status anggota." };
+    throw { code: "DB_UPDATE_FAILED", message: "Gagal menghapus anggota dari tim (Soft Delete)." };
   }
 }
 
@@ -763,7 +755,7 @@ module.exports = {
   updateStudentLearningPathService,
   listDeliverablesService,
   addMemberToGroupService,
-  updateMemberStatusService,
+  removeMemberFromGroupService,
   autoAssignMembersService,
   getUnassignedStudentsService,
   createTimelineService,
