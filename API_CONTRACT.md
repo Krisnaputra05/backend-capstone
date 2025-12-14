@@ -226,8 +226,26 @@ Memperbarui data profil pengguna. **Catatan:** `learning_path` hanya bisa diset 
         "group_name": "Capstone Team A",
         "status": "pending_validation",
         "members": [
-          { "name": "Budi", "role": "leader", "learning_path": "Cloud Computing" },
-          { "name": "Siti", "role": "member", "learning_path": "Machine Learning" }
+          { 
+            "id": "uuid-user-1",
+            "source_id": "FUI0001",
+            "users_source_id": "FUI0001",
+            "name": "Budi", 
+            "email": "student@indo.com",
+            "role": "leader", 
+            "learning_path": "Cloud Computing",
+            "university": "Universitas Indonesia"
+          },
+          { 
+            "id": "uuid-user-2",
+            "source_id": "FUI0002",
+            "users_source_id": "FUI0002",
+            "name": "Siti", 
+            "email": "siti@indo.com",
+            "role": "member", 
+            "learning_path": "Machine Learning",
+            "university": "Institut Teknologi Bandung"
+          }
         ]
       }
     }

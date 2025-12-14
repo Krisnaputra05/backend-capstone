@@ -124,17 +124,17 @@ async function updateProfileService(userId, { name, university, learning_group, 
   // Validasi Enum Learning Path
   if (learning_path) {
     const validPaths = [
-      "Machine Learning (ML)",
-      "Front-End Web & Back-End with AI (FEBE)",
+      "Machine Learning (ML)", 
+      "Front-End Web & Back-End with AI (FEBE)", 
       "React & Back-End with AI (REBE)"
     ];
     if (!validPaths.includes(learning_path)) {
-      throw {
-        code: "INVALID_LEARNING_PATH",
-        message: "Learning Path tidak valid. Pilih antara: ML, FEBE, atau REBE."
+      throw { 
+        code: "INVALID_LEARNING_PATH", 
+        message: "Learning Path tidak valid. Pilih antara: ML, FEBE, atau REBE." 
       };
     }
-
+    
     // Logic: Cek apakah user sudah punya learning path sebelumnya
     // Jika sudah ada (tidak null/empty), maka TIDAK BOLEH ganti lagi ("Cuma sekali aja")
     const { data: currentUser, error: userErr } = await supabase
@@ -144,16 +144,16 @@ async function updateProfileService(userId, { name, university, learning_group, 
       .single();
 
     if (!userErr && currentUser && currentUser.learning_path) {
-      // Cek apakah nilai baru beda dengan yang lama. Kalau sama, ya skip aja (allow).
-      // Tapi kalau beda, reject.
-      if (currentUser.learning_path !== learning_path) {
-        throw {
-          code: "LEARNING_PATH_LOCKED",
-          message: "Learning Path sudah dipilih sebelumnya dan tidak bisa diubah lagi. Hubungi admin jika ada kesalahan."
-        };
-      }
+       // Cek apakah nilai baru beda dengan yang lama. Kalau sama, ya skip aja (allow).
+       // Tapi kalau beda, reject.
+       if (currentUser.learning_path !== learning_path) {
+          throw { 
+            code: "LEARNING_PATH_LOCKED", 
+            message: "Learning Path sudah dipilih sebelumnya dan tidak bisa diubah lagi. Hubungi admin jika ada kesalahan." 
+          };
+       }
     }
-
+    
     updates.learning_path = learning_path;
   }
 
@@ -221,9 +221,9 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
   }
 
   if (!creator.learning_path || !creator.university) {
-    throw {
-      code: "PROFILE_INCOMPLETE",
-      message: "Profil Anda belum lengkap. Harap lengkapi Learning Path dan Universitas sebelum mendaftar."
+    throw { 
+      code: "PROFILE_INCOMPLETE", 
+      message: "Profil Anda belum lengkap. Harap lengkapi Learning Path dan Universitas sebelum mendaftar." 
     };
   }
 
@@ -256,9 +256,9 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
     }
 
     if (!isOpen) {
-      throw {
-        code: "REGISTRATION_CLOSED",
-        message: "Pendaftaran tim saat ini sedang DITUTUP. Silakan cek timeline."
+      throw { 
+        code: "REGISTRATION_CLOSED", 
+        message: "Pendaftaran tim saat ini sedang DITUTUP. Silakan cek timeline." 
       };
     }
   }
@@ -314,8 +314,8 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
 
   if (existingMemberships && existingMemberships.length > 0) {
     const doubleUserIds = existingMemberships.map((m) => m.user_ref);
-    throw {
-      code: "DOUBLE_SUBMISSION",
+    throw { 
+      code: "DOUBLE_SUBMISSION", 
       message: "Beberapa anggota sudah terdaftar di tim lain yang valid.",
       fields: { doubleUserIds }
     };
@@ -350,20 +350,20 @@ async function registerTeamService(creatorId, { group_name, member_source_ids, u
       else isValid = actualCount == requiredCount;
 
       if (!isValid) {
-        throw {
-          code: "INVALID_COMPOSITION",
-          message: `Komposisi tim tidak memenuhi syarat: ${rule.attribute_value} harus ${rule.operator} ${rule.value}.`
+        throw { 
+          code: "INVALID_COMPOSITION", 
+          message: `Komposisi tim tidak memenuhi syarat: ${rule.attribute_value} harus ${rule.operator} ${rule.value}.` 
         };
       }
     }
   }
 
-  // Helper to generate Group Source ID (CAPS + Timestamp + Random)
-  function generateGroupSourceId() {
-    const timestamp = new Date().getTime().toString().slice(-4);
-    const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
-    return `CAPS-${timestamp}${random}`;
-  }
+// Helper to generate Group Source ID (CAPS + Timestamp + Random)
+function generateGroupSourceId() {
+  const timestamp = new Date().getTime().toString().slice(-4);
+  const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
+  return `CAPS-${timestamp}${random}`;
+}
 
   // 4. Simpan Data Tim
   const { data: group, error: groupErr } = await supabase
@@ -440,9 +440,8 @@ async function getTeamService(userId) {
       batch_id,
       members:capstone_group_member (
         user_ref,
-        user_id,
         role,
-        users:user_ref (name, email, learning_path, university, users_source_id)
+        users:user_ref (name, email, learning_path, university)
       )
     `)
     .eq("id", groupId)
@@ -460,8 +459,6 @@ async function getTeamService(userId) {
     batch_id: group.batch_id,
     members: group.members.map(m => ({
       id: m.user_ref,
-      source_id: m.user_id || m.users?.users_source_id,
-      users_source_id: m.user_id || m.users?.users_source_id,
       name: m.users?.name,
       email: m.users?.email,
       role: m.role,
