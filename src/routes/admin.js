@@ -90,7 +90,7 @@ router.put(
     "/groups/:groupId/members/:userId",
     authenticateCustomJWT,
     authorizeRoles(["ADMIN"]),
-    require("../controllers/adminController").updateMemberStatus
+    updateMemberStatus
 );
 
 // Auto Assign (Randomize)

@@ -210,22 +210,7 @@ async function validateGroupRegistration(req, res) {
   }
 }
 
-module.exports = {
-  createGroup,
-  updateProjectStatus,
-  updateGroup,
-  listAllGroups,
-  setGroupRules,
-  validateGroupRegistration,
-  updateStudentLearningPath,
-  addMemberToGroup,
-  removeMemberFromGroup,
-  autoAssignMembers,
-  getUnassignedStudents,
-  getUnassignedStudents,
-  createTimeline,
-  getGroupDetails,
-};
+
 
 /**
  * POST /api/admin/timeline
