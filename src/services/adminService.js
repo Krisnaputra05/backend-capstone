@@ -370,11 +370,12 @@ async function updateMemberStatusService(groupId, userId, status) {
     updated_at: new Date().toISOString(),
   };
 
-  if (status === "inactive") {
-    updatePayload.left_at = new Date().toISOString();
-  } else if (status === "active") {
-    updatePayload.left_at = null; // Reset left_at if reactivating
-  }
+  // Column 'left_at' does not exist in schema, so we only update state and updated_at
+  // if (status === "inactive") {
+  //   updatePayload.left_at = new Date().toISOString();
+  // } else if (status === "active") {
+  //   updatePayload.left_at = null;
+  // }
 
   const { error } = await supabase
     .from("capstone_group_member")
