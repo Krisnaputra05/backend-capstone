@@ -7,7 +7,7 @@ const {
   validateGroupRegistrationService,
   updateStudentLearningPathService,
   addMemberToGroupService,
-  removeMemberFromGroupService,
+  updateMemberStatusService,
   autoAssignMembersService,
   getUnassignedStudentsService,
   createTimelineService,
@@ -302,21 +302,29 @@ async function addMemberToGroup(req, res) {
 /**
  * DELETE /api/admin/groups/:groupId/members/:userId
  */
-async function removeMemberFromGroup(req, res) {
+/**
+ * PUT /api/admin/groups/:groupId/members/:userId
+ */
+async function updateMemberStatus(req, res) {
   const { groupId, userId } = req.params;
+  const { status } = req.body;
 
   if (!groupId || !userId) {
     return buildErrorResponse(res, 400, "Group ID dan User ID wajib diisi.", "VALIDATION_FAILED");
   }
 
+  if (!status || !["active", "inactive"].includes(status)) {
+    return buildErrorResponse(res, 400, "Status wajib diisi ('active' atau 'inactive').", "VALIDATION_FAILED");
+  }
+
   try {
-    await removeMemberFromGroupService(groupId, userId);
+    await updateMemberStatusService(groupId, userId, status);
     return res.status(200).json({
-      message: "Anggota berhasil dihapus dari grup.",
+      message: "Status anggota berhasil diperbarui.",
       meta: { timestamp: new Date().toISOString() },
     });
   } catch (err) {
-    return buildErrorResponse(res, 500, err.message || "Gagal menghapus anggota.", err.code || "INTERNAL_SERVER_ERROR");
+    return buildErrorResponse(res, 500, err.message || "Gagal memperbarui status anggota.", err.code || "INTERNAL_SERVER_ERROR");
   }
 }
 
@@ -369,7 +377,7 @@ module.exports = {
   validateGroupRegistration,
   updateStudentLearningPath,
   addMemberToGroup,
-  removeMemberFromGroup,
+  updateMemberStatus,
   autoAssignMembers,
   getUnassignedStudents,
   createTimeline,

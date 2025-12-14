@@ -562,10 +562,16 @@ Menambahkan siswa ke dalam grup secara manual.
 -   **Body:** `{ "user_id": "uuid-user-1" }`
 -   **Response (201 Created):** `{ "message": "Anggota berhasil ditambahkan ke grup." }`
 
-#### 2. Remove Member from Group
-Menghapus siswa dari grup (Soft Delete: status menjadi inactive).
--   **Endpoint:** `DELETE /groups/:groupId/members/:userId`
--   **Response (200 OK):** `{ "message": "Anggota berhasil dihapus dari grup." }`
+#### 2. Update Member Status
+Mengubah status siswa dalam grup (Active/Inactive).
+-   **Endpoint:** `PUT /groups/:groupId/members/:userId`
+-   **Body:**
+    ```json
+    {
+      "status": "inactive" // or "active"
+    }
+    ```
+-   **Response (200 OK):** `{ "message": "Status anggota berhasil diperbarui.", "data": { ... } }`
 
 #### 3. Get Unassigned Students
 Melihat daftar siswa yang belum memiliki tim (tidak aktif di grup manapun).
