@@ -51,6 +51,7 @@ async function submitFeedbackService(reviewerId, data) {
     .from("capstone_group_member")
     .select("group_ref")
     .eq("user_ref", reviewerId)
+    .eq("state", "active")
     .maybeSingle();
 
   if (!reviewerGroup) {
@@ -78,6 +79,7 @@ async function submitFeedbackService(reviewerId, data) {
     .from("capstone_group_member")
     .select("group_ref")
     .eq("user_ref", revieweeId)
+    .eq("state", "active")
     .maybeSingle();
 
   if (!revieweeGroup) {
@@ -152,6 +154,7 @@ async function getFeedbackStatusService(userId) {
     .from("capstone_group_member")
     .select("group_ref")
     .eq("user_ref", userId)
+    .eq("state", "active")
     .single();
 
   if (!myGroup) return [];
@@ -160,6 +163,7 @@ async function getFeedbackStatusService(userId) {
     .from("capstone_group_member")
     .select("user_ref, user_id, users:user_ref(name, users_source_id)")
     .eq("group_ref", myGroup.group_ref)
+    .eq("state", "active")
     .neq("user_ref", userId); // Exclude self
 
   // Get completed reviews with details

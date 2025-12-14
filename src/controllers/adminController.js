@@ -58,7 +58,7 @@ async function createGroup(req, res) {
  */
 async function updateStudentLearningPath(req, res) {
   const { userId } = req.params;
-  const { learning_path } = req.body;
+  const { learning_path } = req.body || {};
 
   if (!learning_path) {
     return buildErrorResponse(res, 400, "Learning path wajib diisi.", "VALIDATION_FAILED");
@@ -192,7 +192,7 @@ async function setGroupRules(req, res) {
  */
 async function validateGroupRegistration(req, res) {
   const { groupId } = req.params;
-  const { status, rejection_reason } = req.body;
+  const { status, rejection_reason } = req.body || {};
 
   if (!groupId || !["accepted", "rejected"].includes(status)) {
     return buildErrorResponse(res, 400, "Status harus 'accepted' atau 'rejected'.", "VALIDATION_FAILED");
@@ -216,7 +216,7 @@ async function validateGroupRegistration(req, res) {
  * POST /api/admin/timeline
  */
 async function createTimeline(req, res) {
-  const { title, description, start_at, end_at, batch_id } = req.body;
+  const { title, description, start_at, end_at, batch_id } = req.body || {};
 
   if (!title || !start_at || !end_at) {
     return buildErrorResponse(res, 400, "Title, Start Date, dan End Date wajib diisi.", "VALIDATION_FAILED");
@@ -265,7 +265,7 @@ async function getUnassignedStudents(req, res) {
  */
 async function addMemberToGroup(req, res) {
   const { groupId } = req.params;
-  const { user_id } = req.body;
+  const { user_id } = req.body || {};
 
   if (!groupId || !user_id) {
     return buildErrorResponse(res, 400, "Group ID dan User ID wajib diisi.", "VALIDATION_FAILED");
@@ -292,7 +292,7 @@ async function addMemberToGroup(req, res) {
  */
 async function updateMemberStatus(req, res) {
   const { groupId, userId } = req.params;
-  const { status } = req.body;
+  const { status } = req.body || {};
 
   if (!groupId || !userId) {
     return buildErrorResponse(res, 400, "Group ID dan User ID wajib diisi.", "VALIDATION_FAILED");
@@ -317,7 +317,7 @@ async function updateMemberStatus(req, res) {
  * POST /api/admin/groups/auto-assign
  */
 async function autoAssignMembers(req, res) {
-  const { batch_id } = req.body;
+  const { batch_id } = req.body || {};
 
   if (!batch_id) {
     return buildErrorResponse(res, 400, "Batch ID wajib diisi.", "VALIDATION_FAILED");
@@ -377,7 +377,7 @@ module.exports = {
  */
 async function updateTimeline(req, res) {
   const { id } = req.params;
-  const { title, description, start_at, end_at } = req.body;
+  const { title, description, start_at, end_at } = req.body || {};
 
   if (!id) {
     return buildErrorResponse(res, 400, "ID Timeline wajib diisi.", "VALIDATION_FAILED");
