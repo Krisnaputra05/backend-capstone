@@ -6,20 +6,40 @@ const { supabase } = require("../config/supabaseClient");
  * @param {object} data - { reviewee_source_id, is_member_active, contribution_level, reason }
  */
 async function submitFeedbackService(reviewerId, data) {
-  const { reviewee_source_id, is_member_active, contribution_level, reason } = data;
+  const { reviewee_id, reviewee_source_id, is_member_active, contribution_level, reason } = data;
 
-  // 1. Resolve Reviewee ID (from Source ID)
-  const { data: reviewee, error: rErr } = await supabase
-    .from("users")
-    .select("id, batch_id")
-    .eq("users_source_id", reviewee_source_id)
-    .single();
+  let revieweeId = reviewee_id;
+  let revieweeBatchId = null;
 
-  if (rErr || !reviewee) {
-    throw { code: "USER_NOT_FOUND", message: "ID anggota yang dinilai tidak ditemukan." };
+  // 1. Resolve Reviewee ID
+  if (revieweeId) {
+    // If UUID provided, verify it exists and get batch_id
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("id, batch_id")
+      .eq("id", revieweeId)
+      .single();
+
+    if (error || !user) {
+      throw { code: "USER_NOT_FOUND", message: "User tidak ditemukan." };
+    }
+    revieweeBatchId = user.batch_id;
+  } else if (reviewee_source_id) {
+    // If Source ID provided, resolve to UUID
+    const { data: reviewee, error: rErr } = await supabase
+      .from("users")
+      .select("id, batch_id")
+      .eq("users_source_id", reviewee_source_id)
+      .single();
+
+    if (rErr || !reviewee) {
+      throw { code: "USER_NOT_FOUND", message: "ID anggota yang dinilai tidak ditemukan." };
+    }
+    revieweeId = reviewee.id;
+    revieweeBatchId = reviewee.batch_id;
+  } else {
+      throw { code: "VALIDATION_FAILED", message: "Target user ID tidak valid." };
   }
-
-  const revieweeId = reviewee.id;
 
   if (reviewerId === revieweeId) {
     throw { code: "SELF_REVIEW", message: "Anda tidak dapat menilai diri sendiri." };
@@ -93,7 +113,7 @@ async function submitFeedbackService(reviewerId, data) {
   // Let's stick to derived for safety (DB consistency), but allow them in payload without error.
   
   const finalGroupRef = reviewerGroup.group_ref; 
-  const finalBatchId = reviewee.batch_id;
+  const finalBatchId = revieweeBatchId;
 
   const { data: feedback, error } = await supabase
     .from("capstone_360_feedback")

@@ -436,7 +436,8 @@ Memicu pengiriman email pengingat kepada mahasiswa yang BELUM mengumpulkan works
 -   **Body:**
     ```json
     {
-      "reviewee_source_id": "FUI0002",
+      "reviewee_id": "uuid-member-1", // UUID of the member (priority)
+      "reviewee_source_id": "FUI0002", // Optional fallback
       "group_ref": "uuid-group-1", // Optional (Explicit)
       "batch_id": "asah-batch-1",  // Optional (Explicit)
       "is_member_active": true,
