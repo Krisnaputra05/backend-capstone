@@ -101,18 +101,6 @@ async function submitFeedbackService(reviewerId, data) {
   if (existing) {
     throw { code: "ALREADY_SUBMITTED", message: "Anda sudah menilai anggota ini." };
   } 
-
-  // 4. Insert Feedback
-  // Use explicit values if provided (and validated?), otherwise derived
-  // For safety, we keep using derived values for critical logic, but we can verify consistency? 
-  // User asked "kalo responsenya seperti ini", implying they WANT to send it.
-  // Let's use the explicit ones if matched, or just rely on derived because it's safer.
-  // Actually, let's use the derived ones as primary to ensure data integrity, 
-  // BUT if the user passed explicit ones that mismatch, we could throw error?
-  // Or just ignore them. The user prompt implies they want to SEND it.
-  // If I just ignore them and store derived, the result in DB is the same (correct).
-  // But if the user sends WRONG group_id, and I store CORRECT one, that's fine.
-  // Let's stick to derived for safety (DB consistency), but allow them in payload without error.
   
   const finalGroupRef = reviewerGroup.group_ref; 
   const finalBatchId = revieweeBatchId;
@@ -163,7 +151,7 @@ async function getFeedbackStatusService(userId) {
   const { data: currentUser } = await supabase
     .from("users")
     .select("batch_id")
-    .eq("id", userId)
+    .eq("id", userId) 
     .single();
 
   const batchId = currentUser?.batch_id;

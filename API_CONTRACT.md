@@ -576,10 +576,15 @@ Mengatur aturan batch (ex: Machine Learning min 2 orang).
 ### B. Team Member Management (NEW)
 
 #### 1. Add Member to Group
-Menambahkan siswa ke dalam grup secara manual.
+Menambahkan siswa ke dalam grup secara manual. Maksimal 4 orang per grup.
+
 -   **Endpoint:** `POST /groups/:groupId/members`
 -   **Body:** `{ "user_id": "uuid-user-1" }`
 -   **Response (201 Created):** `{ "message": "Anggota berhasil ditambahkan ke grup." }`
+-   **Error Responses:**
+    - `400 GROUP_FULL`: "Grup sudah penuh (Maksimal 4 anggota)."
+    - `409 ALREADY_IN_TEAM`: "User sudah tergabung dalam tim lain."
+    - `400 ALREADY_MEMBER`: "User sudah menjadi anggota grup ini."
 
 #### 2. Update Member Status
 Mengubah status siswa dalam grup (Active/Inactive).

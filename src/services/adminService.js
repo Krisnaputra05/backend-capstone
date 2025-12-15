@@ -319,7 +319,23 @@ async function listDeliverablesService({ document_type, use_case_id }) {
  * Add a member to a group (Admin Manual)
  */
 async function addMemberToGroupService(groupId, userId) {
-  // 1. Check if user is already in an active group
+  // 0. Check Group Existence & Capacity (Max 4)
+  const { data: groupMembers, error: groupErr } = await supabase
+    .from("capstone_group_member")
+    .select("id")
+    .eq("group_ref", groupId)
+    .eq("state", "active");
+
+  if (groupErr) {
+    throw { code: "DB_ERROR", message: "Gagal mengecek data grup." };
+  }
+
+  // Assuming standard capstone rule is Max 4 members
+  if (groupMembers.length >= 4) {
+    throw { code: "GROUP_FULL", message: "Grup sudah penuh (Maksimal 4 anggota)." };
+  }
+
+  // 1. Check if user is already in ANY active group
   const { data: existing } = await supabase
     .from("capstone_group_member")
     .select("id, group_ref")
@@ -328,6 +344,9 @@ async function addMemberToGroupService(groupId, userId) {
     .maybeSingle();
 
   if (existing) {
+    if (existing.group_ref === groupId) {
+      throw { code: "ALREADY_MEMBER", message: "User sudah menjadi anggota grup ini." };
+    }
     throw { code: "ALREADY_IN_TEAM", message: "User sudah tergabung dalam tim lain." };
   }
 
