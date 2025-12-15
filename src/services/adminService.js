@@ -318,8 +318,28 @@ async function listDeliverablesService({ document_type, use_case_id }) {
 /**
  * Add a member to a group (Admin Manual)
  */
-async function addMemberToGroupService(groupId, userId) {
-  // 0. Check Group Existence & Capacity (Max 4)
+async function addMemberToGroupService(groupId, userIdOrSourceId) {
+  // 1. Resolve User (Support both UUID and Source ID)
+  let userQuery = supabase.from("users").select("id, users_source_id");
+  
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrSourceId);
+  
+  if (isUUID) {
+     userQuery = userQuery.eq("id", userIdOrSourceId);
+  } else {
+     // Assume Source ID if not UUID
+     userQuery = userQuery.eq("users_source_id", userIdOrSourceId);
+  }
+
+  const { data: user } = await userQuery.single();
+
+  if (!user) {
+    throw { code: "USER_NOT_FOUND", message: `User tidak ditemukan (ID: ${userIdOrSourceId}). Pastikan ID atau Source ID benar.` };
+  }
+
+  const userUuid = user.id;
+
+  // 2. Check Group Existence & Capacity (Max 4)
   const { data: groupMembers, error: groupErr } = await supabase
     .from("capstone_group_member")
     .select("id")
@@ -330,16 +350,15 @@ async function addMemberToGroupService(groupId, userId) {
     throw { code: "DB_ERROR", message: "Gagal mengecek data grup." };
   }
 
-  // Assuming standard capstone rule is Max 4 members
   if (groupMembers.length >= 4) {
     throw { code: "GROUP_FULL", message: "Grup sudah penuh (Maksimal 4 anggota)." };
   }
 
-  // 1. Check if user is already in ANY active group
+  // 3. Check if user is already in ANY active group
   const { data: existing } = await supabase
     .from("capstone_group_member")
     .select("id, group_ref")
-    .eq("user_ref", userId)
+    .eq("user_ref", userUuid)
     .eq("state", "active")
     .maybeSingle();
 
@@ -350,22 +369,13 @@ async function addMemberToGroupService(groupId, userId) {
     throw { code: "ALREADY_IN_TEAM", message: "User sudah tergabung dalam tim lain." };
   }
 
-  // 1b. Get User Source ID
-  const { data: user } = await supabase
-    .from("users")
-    .select("users_source_id")
-    .eq("id", userId)
-    .single();
-
-  if (!user) throw { code: "USER_NOT_FOUND", message: "User tidak ditemukan." };
-
-  // 2. Add to group
+  // 4. Add to group
   const { data, error } = await supabase
     .from("capstone_group_member")
     .insert({
       group_ref: groupId,
-      user_ref: userId,
-      user_id: user.users_source_id, // Populate Source ID column
+      user_ref: userUuid,
+      user_id: user.users_source_id, // Ensure we store the Source ID text
       role: "member",
       state: "active",
       joined_at: new Date().toISOString(),

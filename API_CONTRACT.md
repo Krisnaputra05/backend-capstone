@@ -579,7 +579,7 @@ Mengatur aturan batch (ex: Machine Learning min 2 orang).
 Menambahkan siswa ke dalam grup secara manual. Maksimal 4 orang per grup.
 
 -   **Endpoint:** `POST /groups/:groupId/members`
--   **Body:** `{ "user_id": "uuid-user-1" }`
+-   **Body:** `{ "user_id": "uuid-user-1" }` OR `{ "user_id": "FUI12345" }` (Supports UUID or Source ID)
 -   **Response (201 Created):** `{ "message": "Anggota berhasil ditambahkan ke grup." }`
 -   **Error Responses:**
     - `400 GROUP_FULL`: "Grup sudah penuh (Maksimal 4 anggota)."
