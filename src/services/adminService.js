@@ -457,7 +457,6 @@ async function autoAssignMembersService(batchId) {
   // 3. Get All Use Cases
   const { data: useCases } = await supabase
     .from("capstone_use_case")
-    .from("capstone_use_case")
     .select("id, name, capstone_use_case_source_id");
 
   // Helper to shuffle array
