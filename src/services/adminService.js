@@ -4,8 +4,8 @@ const { sendTeamValidationEmail } = require("./emailService");
 /**
  * Update Student Learning Path (Admin Override)
  */
-async function updateStudentLearningPathService(userId, { learning_path }) {
-  // Validate Enum
+async function updateStudentLearningPathService(userIdOrSourceId, { learning_path }) {
+  // 1. Validate Enum
   const validPaths = [
     "Machine Learning (ML)", 
     "Front-End Web & Back-End with AI (FEBE)", 
@@ -18,12 +18,28 @@ async function updateStudentLearningPathService(userId, { learning_path }) {
     };
   }
 
-  // Admin Override: No check for previous value ("Bebas")
+  // 2. Resolve User (Support both UUID and Source ID)
+  let userQuery = supabase.from("users").select("id");
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrSourceId);
+
+  if (isUUID) {
+     userQuery = userQuery.eq("id", userIdOrSourceId);
+  } else {
+     userQuery = userQuery.eq("users_source_id", userIdOrSourceId);
+  }
+
+  const { data: targetUser } = await userQuery.single();
+
+  if (!targetUser) {
+    throw { code: "USER_NOT_FOUND", message: `User tidak ditemukan (ID: ${userIdOrSourceId}).` };
+  }
+
+  // 3. Admin Override: Update
   const { data: user, error } = await supabase
     .from("users")
     .update({ learning_path, updated_at: new Date().toISOString() })
-    .eq("id", userId)
-    .select("id, name, email, learning_path")
+    .eq("id", targetUser.id) // Use resolved UUID
+    .select("id, name, email, learning_path, users_source_id")
     .single();
 
   if (error) {

@@ -641,6 +641,7 @@ Mengacak siswa yang belum punya tim ke dalam grup baru.
 #### 1. Update Student Learning Path (Override)
 Endpoint khusus Admin untuk mengubah Learning Path student.
 -   **Endpoint:** `PUT /users/:userId/learning-path`
+    - `:userId` dapat berupa **UUID** atau **User Source ID** (misal: `FUI12345`).
 -   **Body:** `{ "learning_path": "Front-End Web & Back-End with AI (FEBE)" }`
 
 ### D. Other Admin Features
