@@ -159,12 +159,21 @@ async function getFeedbackStatusService(userId) {
 
   if (!myGroup) return [];
 
+  // Get current user's batch info
+  const { data: currentUser } = await supabase
+    .from("users")
+    .select("batch_id")
+    .eq("id", userId)
+    .single();
+
+  const batchId = currentUser?.batch_id;
+
   const { data: teamMembers } = await supabase
     .from("capstone_group_member")
     .select("user_ref, user_id, users:user_ref(name, users_source_id)")
     .eq("group_ref", myGroup.group_ref)
     .eq("state", "active")
-    .neq("user_ref", userId); // Exclude self
+    .neq("user_ref", userId); // Filter out self
 
   // Get completed reviews with details
   const { data: completedReviews } = await supabase
@@ -182,9 +191,11 @@ async function getFeedbackStatusService(userId) {
   return teamMembers.map(m => {
     const review = reviewsMap[m.user_ref];
     return {
-      id: m.user_ref, // User ID (UUID)
-      source_id: m.users?.users_source_id || m.user_id,
+      reviewee_id: m.user_ref, // Matches POST body
+      reviewee_source_id: m.users?.users_source_id || m.user_id, // Matches POST body
       name: m.users?.name || "Unknown Member",
+      group_id: myGroup.group_ref, // Explicit Group ID for POST
+      batch_id: batchId,           // Explicit Batch ID for POST
       status: review ? "completed" : "pending",
       // Include feedback details if completed
       feedback: review ? {
